@@ -31,19 +31,19 @@ Contient toutes les chaînes de caractères.
     - `solcout` : Coût d’une solution
     - `solgain` : Gain d’une solution
     - `tec` : Technologie
-    - `tecenj`
-    - `tecnor`
-    - `sec`
-    - `secchi`
-    - `seccon`
-    - `secenj`
-    - `fin`
+    - `tecenj` : Description des enjeux d'une technologie
+    - `tecnor`: Norme, loi et règlementation 
+    - `sec` : Nom du secteur et descriptions du secteur mélangés
+    - `secchi` : Texte décrivant les chiffres clés d'un secteur
+    - `seccon` : Texte décrivant la consommation d'énergie dans ce secteur
+    - `secenj` : Texte décrivant les enjeux du secteur
+    - `fin` : 
     - `finrex`
     - `finsol`
     - `rex`
-    - `rexcout`
-    - `rexgain`
-    - `ref`
+    - `rexcout` : Coûts liés à la mise en place de la solution dans une étude de cas
+    - `rexgain` : Gains liés à la mise en place de la solution dans une étude de cas (ptite ligne de texte)
+    - `ref` 
     - `autodiag`
     - `opp`
     - `chart`
