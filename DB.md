@@ -20,35 +20,36 @@ mysql -u username -p kerdos < db_backup_plateforme_2024-01-10_010001.sql
 
 ### Dictionnaire `tbldictionnaire`
 
-Contient toutes les chaînes de caractères.
+Contient toutes les chaînes de caractères. Ne pas hésiter à se connecter sur [la platforme kerdos](https://plateforme.kerdos-energy.com/).
+Les identifiants : 
+Login : contact@iapau.org
+Mot de passe : Databattle2024
+Numéro de licence : Yu3dH7ykUY8EoH3
 
 - `codelangue` : Langue de la description (voir `tbllangue`)
     - 2 : français
     - 3 : anglais
     - 4 : espagnol
 - `typedictionnaire` : Type de l’objet
-    - `sol` : Solution
-    - `solcout` : Coût d’une solution
-    - `solgain` : Gain d’une solution
-    - `tec` : Technologie
+    - `sol` : Toutes les informations sur la solution
+    - `tec` : Toutes les infos sur une technologie sauf les Normes et Enjeux
     - `tecenj` : Description des enjeux d'une technologie
-    - `tecnor`: Norme, loi et règlementation 
+    - `tecnor`: Norme, loi et règlementation d'une technologie
     - `sec` : Nom du secteur et descriptions du secteur mélangés
     - `secchi` : Texte décrivant les chiffres clés d'un secteur
     - `seccon` : Texte décrivant la consommation d'énergie dans ce secteur
     - `secenj` : Texte décrivant les enjeux du secteur
-    - `fin` : 
-    - `finrex`
-    - `finsol`
-    - `rex`
-    - `rexcout` : Coûts liés à la mise en place de la solution dans une étude de cas
-    - `rexgain` : Gains liés à la mise en place de la solution dans une étude de cas (ptite ligne de texte)
-    - `ref` 
-    - `autodiag`
-    - `opp`
-    - `chart`
-    - `chartVal`
-    - `bench`
+    - `fin` : Toutes les infos sur un financement sauf ?
+    - `finrex` : ?
+    - `rex` : Nom de l'entreprise associé à l'étude de cas (rex = Retour d'experience)
+    - `rexcout` : Contient les descriptions des coûts dûs à l'installation d'une solution dans le contexte d'une étude de cas
+    - `rexgain` : Contient les descriptions des gains réalisés par l'installation d'une solution dans le contexte d'une étude de cas
+    - `ref` : Nom du document référence
+    - `autodiag` : Questions liées à l'autodiagnostic (aujourd'hui 02/03/2024 il y a quasi rien)
+    - `opp` : Noms des sujets d'étude d'opportunités (Pas encore complètement implémentée sur la platforme Kerdos)
+    - `chart` : Légendes des graphiques (ex : Coûts (EUR/kW))
+    - `chartVal` : Les données des graphiques
+    - `bench` 
     - `benchVal`
 - `codeappelobjet` : Numéro de l’objet
 - `indexdictionnaire` : Un objet peut avoir plusieurs entrées, la première entrée est sûrement celle qu’on veut
