@@ -20,8 +20,9 @@ mysql -u username -p kerdos < db_backup_plateforme_2024-01-10_010001.sql
 
 ### Dictionnaire `tbldictionnaire`
 
-Contient toutes les chaînes de caractères. Ne pas hésiter à se connecter sur [la platforme kerdos](https://plateforme.kerdos-energy.com/).
-Les identifiants : 
+Contient toutes les chaînes de caractères.\n 
+Ne pas hésiter à se connecter sur [la platforme kerdos](https://plateforme.kerdos-energy.com/) pour mieux comprendre la doc.
+# Les identifiants : 
 Login : contact@iapau.org
 Mot de passe : Databattle2024
 Numéro de licence : Yu3dH7ykUY8EoH3
