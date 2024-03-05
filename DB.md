@@ -81,6 +81,16 @@ Contient toutes les chaînes de caractères liées aux descriptions
 - `typedictionnairecategories` : Type de l’objet
     - `res` : Contient les valeurs [-N/A-, Oui, Non, Partiel] (Je ne sais pas encore à quoi elles servent)
     - `tra` : Contient les valeurs [Neuf/Extension, Renovation/retrofit, Neuf OU Existant] (Je ne sais pas encore à quoi elles servent)
+    - `lang` : Contient les noms de langue
+    - `zon` : Contient des zones géographiques (ex : Europe du Nord)
+    - `pay` : Contient des noms de pays
+    - `reg` : Contient des noms de régions à l'intérieur des pays
+    - `ene` : Contient des types d'énergies (Ex : Electricite, Gaz, Charbon, ...)
+    - `moi` : Contient des mois (ex : Jan. , Fév.)
+    - `per` : 
+    - `mon` : Contient des noms de monnaies
+    - `tax` : Contient des types de taxation (ex : HTT, Hors TVA, ...)
+    - `pub` : Contient (Public, Privé, Ménage, Industrie)
     - `uni` : Contient plein d'unités (ex: EUR / Ah / m.s-1)
     - `reffor`: Contient les types de réferences (Fichier/ Livre ou Internet)
     - `reftyp` : ?
@@ -103,3 +113,6 @@ and typedictionnairecategories  = "tecgrp"
 - `codeappelobjet` : Numéro de l’objet
 - `indexdictionnairecategories` : Un objet peut avoir plusieurs entrées, la première entrée est sûrement celle qu’on veut
 - `traductiondictionnairecategories` : Description de l’objet
+
+####Notes :
+On peut récupérer la catégorie juste au dessus de celle donnée par typedictionnairecategories='sys' en récupérant le nom de la techno associée à la solution.
