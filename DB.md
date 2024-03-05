@@ -70,7 +70,7 @@ where codelangue = 2           # français
 
 
 
-### Dictionnaire `tbldictionnaire`
+### Dictionnaire `tbldictionnairecategories`
 
 Contient toutes les chaînes de caractères liées aux descriptions
 
@@ -78,7 +78,7 @@ Contient toutes les chaînes de caractères liées aux descriptions
     - 2 : français
     - 3 : anglais
     - 4 : espagnol
-- `typedictionnaire` : Type de l’objet
+- `typedictionnairecategories` : Type de l’objet
     - `res` : Toutes les informations sur la solution
     - `tra` : Toutes les infos sur une technologie sauf les Normes et Enjeux
     - `uni` : Description des enjeux d'une technologie
@@ -95,7 +95,7 @@ Contient toutes les chaînes de caractères liées aux descriptions
  
 Exemple : récupérer les noms de grandes catégories de technologies.
 ```sql
-SELECT traductiondictionnairecategories  FROM tbldictionnairecategories t 
+SELECT traductiondictionnairecategories  FROM tbldictionnairecategories 
 WHERE codelangue = 2 
 and typedictionnairecategories  = "tecgrp"
 ```
