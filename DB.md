@@ -67,3 +67,39 @@ where codelangue = 2           # français
 | traductiondictionnaire |
 | :--- |
 | Campagne de détection des fuites sur un réseau d’air comprimé |
+
+
+
+### Dictionnaire `tbldictionnaire`
+
+Contient toutes les chaînes de caractères liées aux descriptions
+
+- `codelangue` : Langue de la description (voir `tbllangue`)
+    - 2 : français
+    - 3 : anglais
+    - 4 : espagnol
+- `typedictionnaire` : Type de l’objet
+    - `res` : Toutes les informations sur la solution
+    - `tra` : Toutes les infos sur une technologie sauf les Normes et Enjeux
+    - `uni` : Description des enjeux d'une technologie
+    - `reffor`: Norme, loi et règlementation d'une technologie
+    - `reftyp` : Nom du secteur et descriptions du secteur mélangés
+    - `tecgrp` : Les grandes catégories de technologies
+    - `secgrp` : Texte décrivant la consommation d'énergie dans ce secteur
+    - `solcat` : Texte décrivant les enjeux du secteur
+    - `mec` : Toutes les infos sur un financement sauf ?
+    - `cee` : ?
+    - `ceethù` : Nom de l'entreprise associé à l'étude de cas (rex = Retour d'experience)
+    - `ceegrp` : Contient les descriptions des coûts dûs à l'installation d'une solution dans le contexte d'une étude de cas
+    - `sys` : Contient les descriptions des gains réalisés par l'installation d'une solution dans le contexte d'une étude de cas
+ 
+Exemple : récupérer les noms de grandes catégories de technologies.
+```sql
+SELECT traductiondictionnairecategories  FROM tbldictionnairecategories t 
+WHERE codelangue = 2 
+and typedictionnairecategories  = "tecgrp"
+```
+
+- `codeappelobjet` : Numéro de l’objet
+- `indexdictionnairecategories` : Un objet peut avoir plusieurs entrées, la première entrée est sûrement celle qu’on veut
+- `traductiondictionnairecategories` : Description de l’objet
