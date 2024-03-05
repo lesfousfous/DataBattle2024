@@ -79,19 +79,19 @@ Contient toutes les chaînes de caractères liées aux descriptions
     - 3 : anglais
     - 4 : espagnol
 - `typedictionnairecategories` : Type de l’objet
-    - `res` : Toutes les informations sur la solution
-    - `tra` : Toutes les infos sur une technologie sauf les Normes et Enjeux
-    - `uni` : Description des enjeux d'une technologie
-    - `reffor`: Norme, loi et règlementation d'une technologie
-    - `reftyp` : Nom du secteur et descriptions du secteur mélangés
+    - `res` : 
+    - `tra` : 
+    - `uni` :
+    - `reffor`: 
+    - `reftyp` : 
     - `tecgrp` : Les grandes catégories de technologies
-    - `secgrp` : Texte décrivant la consommation d'énergie dans ce secteur
-    - `solcat` : Texte décrivant les enjeux du secteur
-    - `mec` : Toutes les infos sur un financement sauf ?
-    - `cee` : ?
-    - `ceethù` : Nom de l'entreprise associé à l'étude de cas (rex = Retour d'experience)
-    - `ceegrp` : Contient les descriptions des coûts dûs à l'installation d'une solution dans le contexte d'une étude de cas
-    - `sys` : Contient les descriptions des gains réalisés par l'installation d'une solution dans le contexte d'une étude de cas
+    - `secgrp` : 
+    - `solcat` :
+    - `mec` : 
+    - `cee` : 
+    - `ceethù` :
+    - `ceegrp` : 
+    - `sys` : 
  
 Exemple : récupérer les noms de grandes catégories de technologies.
 ```sql
