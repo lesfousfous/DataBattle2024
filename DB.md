@@ -79,19 +79,19 @@ Contient toutes les chaînes de caractères liées aux descriptions
     - 3 : anglais
     - 4 : espagnol
 - `typedictionnairecategories` : Type de l’objet
-    - `res` : 
-    - `tra` : 
-    - `uni` :
-    - `reffor`: 
-    - `reftyp` : 
-    - `tecgrp` : Les grandes catégories de technologies
-    - `secgrp` : 
-    - `solcat` :
-    - `mec` : 
-    - `cee` : 
-    - `ceethù` :
+    - `res` : Contient les valeurs [-N/A-, Oui, Non, Partiel] (Je ne sais pas encore à quoi elles servent)
+    - `tra` : Contient les valeurs [Neuf/Extension, Renovation/retrofit, Neuf OU Existant] (Je ne sais pas encore à quoi elles servent)
+    - `uni` : Contient plein d'unités (ex: EUR / Ah / m.s-1)
+    - `reffor`: Contient les types de réferences (Fichier/ Livre ou Internet)
+    - `reftyp` : ?
+    - `tecgrp` : Contient les grandes catégories de technologies
+    - `secgrp` : Contient les grandes catégories de secteurs
+    - `solcat` : Contient les 3 grandes catégories de solutions (Comportementale / Exploitation / Investissement)
+    - `mec` : Contient les mécanismes de financement
+    - `cee` : Contient des numéros d'arrêtés (jsp à quoi ça sert)
+    - `ceethm` :
     - `ceegrp` : 
-    - `sys` : 
+    - `sys` : Correspond aux sous-catégories les plus profondes de solutions sauf que des fois il y a général au lieu du nom qui va bien (let's go la bdd en access)
  
 Exemple : récupérer les noms de grandes catégories de technologies.
 ```sql
