@@ -1,7 +1,4 @@
-from datasets import load_dataset, Dataset
-from datasets.info import DatasetInfo
-from datasets.splits import NamedSplit
-from datasets.table import Table
+from datasets import Dataset
 from sentence_transformers.losses import CosineSimilarityLoss
 import pandas as pd
 from setfit import SetFitModel, Trainer
