@@ -116,3 +116,5 @@ and typedictionnairecategories  = "tecgrp"
 
 ####Notes :
 On peut récupérer la catégorie juste au dessus de celle donnée par typedictionnairecategories='sys' en récupérant le nom de la techno associée à la solution.
+
+Si sys de dictionnairescategories retourne general, le nom de la techno est dans le tableau tbldictionnaire 
