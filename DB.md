@@ -53,7 +53,7 @@ Contient toutes les chaînes de caractères.
     - `bench` 
     - `benchVal`
 - `codeappelobjet` : Numéro de l’objet
-- `indexdictionnaire` : Un objet peut avoir plusieurs entrées, la première entrée est sûrement celle qu’on veut
+- `indexdictionnaire` : Un objet peut avoir plusieurs entrées, pour les solutions par exemple, la première correspond au nom de la solution.
 - `traductiondictionnaire` : Description de l’objet
 
 Exemple : récupérer la description de la solution 160.
