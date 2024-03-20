@@ -1,5 +1,5 @@
 from transformers import AutoTokenizer, AutoModel
-from database import Preprocessor
+from DataBattle2024.part1.database import Preprocessor
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -145,7 +145,7 @@ with open("./data/data.json", "r") as f:
 
 preprocessor = Preprocessor()
 sentences, classes = retrieve_all_solutions_and_classes(input_dict)
-sentence = "I would like to have optimized regulation of my cold unit"
+sentence = "I would like to size a solar panel ?"
 print(preprocessor(sentence))
 sentences.append(
     preprocessor(sentence))  # We put the query at the end of the sentences
@@ -157,7 +157,7 @@ scores = finder.calculate_similarity_scores(sentence_embeddings)
 solution_indexes = finder.find_best_solutions(0.2, scores)
 solutions = [sentences[x] for x in solution_indexes]
 cross_encoded_scores = finder.apply_cross_encoder(
-    sentences[-1], [sentences[x] for x in solution_indexes])
+    sentences[-1], solutions)
 
 dataset = {}
 for index_in_best_solutions, index_in_all_sentences in zip(range(len(solution_indexes)), solution_indexes):
