@@ -216,7 +216,7 @@ with open("./data/data.json", "r") as f:
 
 preprocessor = Preprocessor()
 sentences, classes = retrieve_all_solutions_and_classes(input_dict)
-user_query = "I would like to size a solar panel ?"
+user_query = "I would like to size a solar panel"
 print(preprocessor(user_query))
 sentences.append(
     preprocessor(user_query))  # We put the query at the end of the sentences
