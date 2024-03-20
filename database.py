@@ -1,3 +1,10 @@
+import string
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
+import nltk
+import json
+from googletrans import Translator
 import mysql.connector
 from mysql.connector import MySQLConnection
 from configparser import ConfigParser
@@ -61,6 +68,171 @@ class Table():
         return self.dataframe.__str__()
 
 
-db = Database()
-solutions = Table("tblsolution", database=db)
-print(solutions)
+class Preprocessor:
+    """Removes useless information from text (punctuation, stopwords, lemmatization)"""
+
+    def _pipeline(self, text: str):
+        text = text.lower()
+        text = self._remove_punctuation(text)
+        text = self._remove_stopwords(text)
+        text = self._lemmatize_words(text)
+        text = self._remove_specific_words(text)
+        return text
+
+    def __call__(self, text):
+        return self._pipeline(text)
+
+    def _remove_punctuation(self, text):
+        """custom function to remove the punctuation"""
+        return text.translate(str.maketrans('', '', string.punctuation))
+
+    def _remove_stopwords(self, text):
+        """custom function to remove the stopwords"""
+        STOPWORDS = set(stopwords.words('english'))
+        return " ".join([word for word in str(text).split() if word not in STOPWORDS])
+
+    def _lemmatize_words(self, text):
+        wordnet_map = {"N": wordnet.NOUN, "V": wordnet.VERB,
+                       "J": wordnet.ADJ, "R": wordnet.ADV}
+        lemmatizer = WordNetLemmatizer()
+        pos_tagged_text = nltk.pos_tag(text.split())
+        return " ".join([lemmatizer.lemmatize(word, wordnet_map.get(pos[0], wordnet.NOUN)) for word, pos in pos_tagged_text])
+
+    def _remove_specific_words(self, text):
+        BANNED_VOCAB = ["reduce", "optimize",
+                        "improve", "increase", "optimized", "would", "like"]
+        return " ".join([word for word in str(text).split() if word not in BANNED_VOCAB])
+
+
+class SolutionsAndCategoriesData:
+
+    def __init__(self, database: Database) -> None:
+        self.database = database
+        self.cursor = database.database_connection.cursor()
+        self.solutions = self._init_solutions()
+        self.data = self._init_classes()
+
+    def _init_solutions(self):
+        """Returns all list of all the solutions in the database and the id of the first category/techno above it"""
+        self.cursor.execute("""SELECT traductiondictionnaire, numtechno FROM tblsolution 
+                    JOIN tbltechno ON codetechno = numtechno 
+                    JOIN tbldictionnaire ON numsolution = codeappelobjet
+                    WHERE typedictionnaire='sol'
+                    AND codelangue=2
+                    AND indexdictionnaire=1""")
+        all_solutions = self.cursor.fetchall()
+        return all_solutions
+
+    def _init_classes(self):
+        """Organize all solutions within their category
+
+        Returns:
+            solutions_dict : Dictionnary of the following format {"class_index" : [{"text-label" : name of the class, "solution" : name of the solution}]}
+        """
+        class_ids = [category_id for _, category_id in self.solutions]
+        init_values = [{"class_name": "Aucune", "solutions": []}
+                       for x in range(len(class_ids))]
+        solutions_dict = dict((key, value)
+                              for key, value in zip(class_ids, init_values))
+        for solution_name, class_id in self.solutions:
+            parent_technologies = self._retrieve_parent_technos(class_id)
+            class_name = " + ".join(parent_technologies[::-1])
+            if class_name:
+                solutions_dict[class_id]["class_name"] = class_name
+            solutions_dict[class_id]["solutions"].append(solution_name)
+            # print(f"Added {solution_name} to {class_name} / {class_id}")
+        return solutions_dict
+
+    def _retrieve_parent_technos(self, first_category_of_the_solution):
+        techno_associe = []
+        # 1 Getting the name of the first category associated with the solution and the id of the parent
+        self.cursor.execute(
+            f"""SELECT numtechno, traductiondictionnaire, codeparenttechno FROM tbltechno t
+            JOIN tbldictionnaire d ON numtechno = codeappelobjet
+            WHERE codelangue = 2 AND typedictionnaire = 'tec' AND codeappelobjet ={first_category_of_the_solution}""")
+        techno = self.cursor.fetchall()
+        if techno:  # If the first category isn't empty, add it to the list of categories the techno belongs to
+            techno_associe.append(techno[0][1])
+        while techno:  # While the last category has a parent, keep adding it to the list of categories the techno belongs to
+            code_techno_parent = techno[0][2]
+            self.cursor.execute(f"""
+                          SELECT numtechno, traductiondictionnaire, codeparenttechno FROM tbltechno t
+                          JOIN tbldictionnaire d ON numtechno = codeappelobjet
+                          WHERE codelangue = 2 AND typedictionnaire = 'tec' 
+                          AND indexdictionnaire = 1
+                          AND codeappelobjet ={code_techno_parent}""")
+            techno = self.cursor.fetchall()
+            if techno:  # Don't add parent if it is null
+                techno_associe.append(techno[0][1])
+        return techno_associe
+
+    def translate_data_to_file_for_gpt(self):
+        translator = Translator()
+        print("Translating...")
+        with open("translated_data.txt", "w+") as f:
+            for class_id in self.data.keys():
+                class_name = self.data[class_id]["class_name"]
+                class_name_translated = translator.translate(
+                    class_name).text
+                f.write(f"{class_id} : {class_name_translated}\n")
+                solutions_translated = translator.translate(
+                    self.data[class_id]["solutions"])
+                for solution in solutions_translated:
+                    f.write(f"{solution.text}\n")
+                f.write("\n")
+
+    def export_data_to_json(self):
+        solutions_text = []
+        label = []
+        label_text = []
+        for class_id in self.data.keys():
+            class_name = self.data[class_id]["class_name"]
+            for solution in self.data[class_id]["solutions"]:
+                solutions_text.append(solution)
+                label.append(class_id)
+                label_text.append(class_name)
+        translator = Translator()
+        preprocessor = Preprocessor()
+        print('Translating...')
+        solutions_text = translator.translate(solutions_text, dest="en")
+        solutions_text = [preprocessor(x.text) for x in solutions_text]
+        label_text = translator.translate(label_text, dest="en")
+        processed_label_text = [preprocessor(x.text) for x in label_text]
+        unmodified_label_text = [x.text for x in label_text]
+        dataset = {"text": solutions_text,
+                   "label": label,
+                   "label_text": processed_label_text,
+                   "base_label_text": unmodified_label_text}
+        with open("./data/data.json", "w") as outfile:
+            json.dump(dataset, outfile)
+
+
+def read_gpt_to_file(infile, outfile, do_translate=False):
+    with open(infile, "r") as f:
+        file = f.readlines()
+        labels = []
+        label_texts = []
+        questions_english = []
+        for i in range(len(file)):
+            if "Category" in file[i]:
+                label, label_text = file[i].split(":")
+                label = int(label.split(" ")[1])
+            elif "Question" in file[i] or "Demand" in file[i]:
+                questions_english.append(file[i+2])
+                labels.append(label)
+                label_texts.append(label_text)
+                questions_english.append(file[i+3])
+                labels.append(label)
+                label_texts.append(label_text)
+        if do_translate:
+            translator = Translator()
+            print('Translating...')
+            question_fr = translator.translate(questions_english, dest="fr")
+            question_fr = [x.text for x in question_fr]
+            dataset = {"text": question_fr,
+                       "label": labels, "label_text": label_texts}
+        else:
+            dataset = {"text": questions_english,
+                       "label": labels, "label_text": label_texts}
+        with open(outfile, "w+") as f:
+            json.dump(dataset, f)
