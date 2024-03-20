@@ -114,7 +114,7 @@ class SolutionsAndCategoriesData:
 
     def _init_solutions(self):
         """Returns all list of all the solutions in the database and the id of the first category/techno above it"""
-        self.cursor.execute("""SELECT traductiondictionnaire, numtechno FROM tblsolution 
+        self.cursor.execute("""SELECT traductiondictionnaire, numtechno, numsolution FROM tblsolution 
                     JOIN tbltechno ON codetechno = numtechno 
                     JOIN tbldictionnaire ON numsolution = codeappelobjet
                     WHERE typedictionnaire='sol'
@@ -129,17 +129,18 @@ class SolutionsAndCategoriesData:
         Returns:
             solutions_dict : Dictionnary of the following format {"class_index" : [{"text-label" : name of the class, "solution" : name of the solution}]}
         """
-        class_ids = [category_id for _, category_id in self.solutions]
+        class_ids = [category_id for _, category_id, _ in self.solutions]
         init_values = [{"class_name": "Aucune", "solutions": []}
                        for x in range(len(class_ids))]
         solutions_dict = dict((key, value)
                               for key, value in zip(class_ids, init_values))
-        for solution_name, class_id in self.solutions:
+        for solution_name, class_id, solution_id in self.solutions:
             parent_technologies = self._retrieve_parent_technos(class_id)
             class_name = " + ".join(parent_technologies[::-1])
             if class_name:
                 solutions_dict[class_id]["class_name"] = class_name
-            solutions_dict[class_id]["solutions"].append(solution_name)
+            solutions_dict[class_id]["solutions"].append(
+                (solution_id, solution_name))
             # print(f"Added {solution_name} to {class_name} / {class_id}")
         return solutions_dict
 
@@ -183,12 +184,14 @@ class SolutionsAndCategoriesData:
 
     def export_data_to_json(self):
         solutions_text = []
+        solution_ids = []
         label = []
         label_text = []
         for class_id in self.data.keys():
             class_name = self.data[class_id]["class_name"]
             for solution in self.data[class_id]["solutions"]:
-                solutions_text.append(solution)
+                solutions_text.append(solution[1])
+                solution_ids.append(solution[0])
                 label.append(class_id)
                 label_text.append(class_name)
         translator = Translator()
@@ -199,7 +202,8 @@ class SolutionsAndCategoriesData:
         label_text = translator.translate(label_text, dest="en")
         processed_label_text = [preprocessor(x.text) for x in label_text]
         unmodified_label_text = [x.text for x in label_text]
-        dataset = {"text": solutions_text,
+        dataset = {"solution_text": solutions_text,
+                   "solution_ids": solution_ids,
                    "label": label,
                    "label_text": processed_label_text,
                    "base_label_text": unmodified_label_text}

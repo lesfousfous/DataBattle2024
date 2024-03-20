@@ -1,9 +1,9 @@
-from DataBattle2024.part1.database import Database, SolutionsAndCategoriesData, read_gpt_to_file
+from database import Database, SolutionsAndCategoriesData, read_gpt_to_file
 
 
 prep_solutions_for_gpt = False
 create_dataset_from_GPT_output = False
-update_solutions_data = False
+update_solutions_data = True
 
 if prep_solutions_for_gpt:
     database = Database()
