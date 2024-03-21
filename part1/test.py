@@ -1,4 +1,4 @@
-from database import Solution
+from database import SolutionDB
 
-sol = Solution(1454)
+sol = SolutionDB(1454)
 print(sol)

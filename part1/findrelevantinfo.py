@@ -7,7 +7,6 @@ from nltk.corpus import wordnet
 import nltk
 import torch.nn.functional as F
 import numpy as np
-import json
 import time
 from collections import Counter
 from sentence_transformers import CrossEncoder
@@ -127,14 +126,14 @@ class BestSolutionsFinder:
             self.best_solutions, key=lambda solution: solution.get_cross_encoded_score(), reverse=True)
         # In all those solutions, find if a certain class (for instance Utilité + Froid) represent more than 30% and return it
         # Always returns the 3 best solutions
-        best_classes, three_best_solutions, solution_that_represents_a_class = self._adapt_solutions_based_on_results()
+        three_best_solutions, solution_that_represents_a_class = self._adapt_solutions_based_on_results()
         # Show some visual output
-        print(
-            f"The rest of the processing took {time.time() - start_time} seconds\n")
-        print(
-            f"Here are the categories that contains all the info you need : {best_classes}")
-        print(
-            f"Here are a few relevant solutions for your query : {[str(solution) for solution in three_best_solutions]}")
+        # print(
+        #     f"The rest of the processing took {time.time() - start_time} seconds\n")
+        # print(
+        #     f"Here are the categories that contains all the info you need : {best_classes}")
+        # print(
+        #     f"Here are a few relevant solutions for your query : {[str(solution) for solution in three_best_solutions]}")
         return [solution.id for solution in three_best_solutions], solution_that_represents_a_class
 
     def _calc_solution_embeddings(self):
@@ -179,7 +178,7 @@ class BestSolutionsFinder:
 
     def _adapt_solutions_based_on_results(self):
         """Calculate the most frequent class in the best solutions and if frequency is high,
-        consider that the query was tailored for a category so give back the name of that category
+        consider that the query was tailored for a category we need to give that category to the user
         Also always returns the 3 best solutions
         """
 
@@ -228,7 +227,8 @@ class BestSolutionsFinder:
                             [len(classe.split(" + ")), solution])
                         break
 
-        return best_classes_and_frequencies, self.ordered_best_solutions[:3], solutions_that_represent_their_class
+        # I chose to represent a class by a solution that is within that class and by the number of components in a class (all that is in solutions_that_represent_their_class)
+        return self.ordered_best_solutions[:3], solutions_that_represent_their_class
 
 
 class Solution:
@@ -279,15 +279,3 @@ def retrieve_all_solutions_and_classes(dictionnary):
             dictionnary["solution_text"][i], dictionnary["base_label_text"][i], dictionnary["label_text"][i], dictionnary["solution_ids"][i])
         solutions.append(solution)
     return solutions
-
-
-with open("./data/data.json", "r") as f:
-    input_dict = json.load(f)
-
-preprocessor = Preprocessor()
-solutions = retrieve_all_solutions_and_classes(input_dict)
-user_query = "How to size a solar panel"
-print(preprocessor(user_query))
-preprocessed_query = preprocessor(user_query)
-finder = BestSolutionsFinder(solutions, preprocessed_query)
-print(finder.relevant_solutions())

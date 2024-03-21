@@ -253,16 +253,16 @@ class Category(DatabaseObject):
         self.technologies = technologies
 
     def __str__(self) -> str:
-        return str([str(techno) for techno in self.technologies])
+        return str([techno.name for techno in self.technologies])
 
 
 class Technology(DatabaseObject):
 
     def __init__(self, id) -> None:
         self.id = id
-        self.name = self._retrieve_name()
-        self.description = self._retrieve_data(1)
-        self.application = self._retrieve_data(2)
+        self.name = self._retrieve_data(1)
+        self.description = self._retrieve_data(2)
+        self.application = self._retrieve_data(3)
         self.impact_opex = self._retrieve_data(11)
         self.approche_systeme = self._retrieve_data(13)
         self.capex_cout_global = self._retrieve_data(8)
@@ -281,7 +281,7 @@ class Technology(DatabaseObject):
         return f"{self.name} : {self.description}"
 
 
-class Solution(DatabaseObject):
+class SolutionDB(DatabaseObject):
 
     def __init__(self, numsolution) -> None:
         self.id = numsolution
@@ -302,7 +302,6 @@ class Solution(DatabaseObject):
             f"""SELECT codetechno FROM tblsolution WHERE numsolution = {self.id}""")
         technos = []
         techno = self.cursor.fetchone()
-        print(f"First techno : {techno[0]}")
         if techno:  # If the first category isn't empty, add it to the list of categories the techno belongs to
             technos.append(techno[0])
         while techno:  # While the last category has a parent, keep adding it to the list of categories the techno belongs to
@@ -315,7 +314,6 @@ class Solution(DatabaseObject):
                           AND codeappelobjet ={techno[0]}""")
             techno = self.cursor.fetchone()
             if techno:  # Don't add parent if it is null
-                print(f"New techno : {techno[0]}")
                 technos.append(techno[0])
         list_of_technos = [Technology(x) for x in technos][::-1]
         return Category(list_of_technos)
@@ -330,4 +328,4 @@ class Solution(DatabaseObject):
             return "Aucune"
 
     def __str__(self) -> str:
-        return str(self.category)
+        return f"{str(self.category)}\n{self.title} :\n{self.description}\n"
