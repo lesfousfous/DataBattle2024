@@ -61,93 +61,81 @@ class BestSolutionsFinder:
     then uses cosine similarity to find the most relevant solutions and refines that ranking by applying a cross encoder
     """
 
-    def __init__(self, all_solutions: 'list[str]', all_classes: 'list[str]') -> None:
+    def __init__(self, all_solutions: 'list[Solution]', user_query: str) -> None:
         """
         Args:
             all_solutions (list[str]): The list of all solution titles and the user query as the last element
         """
         self.all_solutions = all_solutions
+        self.user_query = user_query
         self.model = EmbeddingsModel()
-        self.all_classes = all_classes
 
     def relevant_solutions(self):
         # Turn the solutions and user query into embeddings
-        self.all_embeddings = self.model(self.all_solutions)
+        self._calc_solution_embeddings()
+        user_query_embedding = self.model(self.user_query)[0]
         start_time = time.time()
         # Calculate cosine similarity between each solution embedding and the query
-        self.cosine_similarity_scores = self._calculate_similarity_scores()
-        # Find the indexes of the best solutions (we select solutions that are within 0.2 of the best)
-        self.best_solution_indexes = self._find_best_solutions(0.2)
-        # Here are the titles that correspond to the best solutions
-        self.best_solution_titles = [self.all_solutions[i]
-                                     for i in self.best_solution_indexes]
-        # We calculate another metric to find which solution is the best
-        self.cross_encoded_scores = self._apply_cross_encoder()
-        # We store the 2 scores for each solution in a dictionnary and sort on the cross encoding score (higher is better)
-        self.sorted_dict_of_solutions = self.store_and_sort_solutions()
-        # Extract the best solution indexes after sorting on cross encoder score
-        self.best_solutions_by_cross_encoder = list(
-            self.sorted_dict_of_solutions.keys())
+        self._calculate_similarity_scores(user_query_embedding)
+        # Find the best solutions (we select solutions that are within 0.2 of the best)
+        self.best_solutions = self._find_best_solutions(0.2)
+        # We calculate another metric to make another ranking within the best solutions
+        self._apply_cross_encoder()
+        # sort on the cross encoding score (higher is better)
+        self.ordered_best_solutions: 'list[Solution]'
+        self.ordered_best_solutions = sorted(
+            self.best_solutions, key=lambda solution: solution.get_cross_encoded_score(), reverse=True)
         # In all those solutions, find if a certain class (for instance Utilité + Froid) represent more than 30% and return it
         # Always returns the 3 best solutions
-        self.relevant_data = self._adapt_solutions_based_on_results()
+        best_classes, three_best_solutions, solution_that_represents_a_class = self._adapt_solutions_based_on_results()
         # Show some visual output
-        if type(self.relevant_data[0]) is int:
-            print(
-                f"Here are a few relevant solutions for your query : {[self.all_solutions[x] for x in self.relevant_data]}")
-        else:
-            print(
-                f"Here are the categories that contains all the info you need : {[x[0] for x in self.relevant_data[0]]}")
-            print(
-                f"Here is are a few relevant solutions for your query : {[self.all_solutions[x] for x in self.relevant_data[1]]}")
-
         print(
-            f"The rest of the processing took {time.time() - start_time} seconds")
+            f"The rest of the processing took {time.time() - start_time} seconds\n")
+        print(
+            f"Here are the categories that contains all the info you need : {best_classes}")
+        print(
+            f"Here are a few relevant solutions for your query : {[str(solution) for solution in three_best_solutions]}")
+        return [solution.id for solution in three_best_solutions], solution_that_represents_a_class
 
-    def _cosine_similarity(self, embedding1, embedding2):
-        """A distance metric to find how close 2 embeddings are"""
-        return np.dot(embedding1, embedding2)/(np.linalg.norm(embedding1) * np.linalg.norm(embedding2))
+    def _calc_solution_embeddings(self):
+        solution_texts = [solution.text for solution in self.all_solutions]
+        embeddings = self.model(solution_texts)
+        for i in range(len(embeddings)):
+            self.all_solutions[i].set_embedding(embeddings[i])
 
-    def _calculate_similarity_scores(self):
+    def _cosine_similarity(self, vec1, vec2):
+        """Calculate the cosine similarity between two vectors."""
+        cosine_similarity = torch.nn.functional.cosine_similarity(
+            vec1.unsqueeze(0), vec2.unsqueeze(0))
+        return cosine_similarity.item()
+
+    def _calculate_similarity_scores(self, user_query_embedding):
         """Calculates the distance between the query embedding and each solution embedding"""
-        all_similarity_scores = []
-        for embedding in self.all_embeddings[:-1]:
-            all_similarity_scores.append(
-                self._cosine_similarity(embedding, self.all_embeddings[-1]))
-        return all_similarity_scores
+        for solution in self.all_solutions:
+            cosine_similarity = self._cosine_similarity(
+                solution.get_embedding(), user_query_embedding)
+            solution.set_cosine_similarity_score(
+                cosine_similarity)
 
     def _apply_cross_encoder(self):
         model = CrossEncoder(
             "cross-encoder/ms-marco-MiniLM-L-6-v2", max_length=512)
-        user_query = self.all_solutions[-1]
         scores = model.predict(
-            [(user_query, solution) for solution in self.all_solutions]
+            [(self.user_query, solution.text)
+             for solution in self.best_solutions]
         )
-        return scores
 
-    def _find_best_solutions(self, max_distance_from_best: float):
-        best_score = max(self.cosine_similarity_scores)
-        best_solutions_indexes = []
-        for solution_index in range(len(self.cosine_similarity_scores)):
-            if np.abs(self.cosine_similarity_scores[solution_index] - best_score) < max_distance_from_best:
-                best_solutions_indexes.append(solution_index)
-        return best_solutions_indexes
+        for i in range(len(scores)):
+            self.best_solutions[i].set_cross_encoded_score(scores[i])
 
-    def store_and_sort_solutions(self):
-        sorted_dict_by_cross_encoded = {
-            index_all_sentences: {
-                "cosine_similarity": self.cosine_similarity_scores[index_all_sentences],
-                "cross_encoded": self.cross_encoded_scores[index_best_solutions]
-            }
-            for index_best_solutions, index_all_sentences in enumerate(self.best_solution_indexes)
-        }
-        # Sort the dictionary items by 'cross_encoded' in descending order and directly update the dictionary
-        sorted_dict_by_cross_encoded = dict(sorted(
-            sorted_dict_by_cross_encoded.items(),
-            key=lambda item: item[1]['cross_encoded'],
-            reverse=True
-        ))
-        return sorted_dict_by_cross_encoded
+    def _find_best_solutions(self, max_distance_from_best: float) -> 'list[Solution]':
+        best_solution = max(
+            self.all_solutions, key=lambda solution: solution.get_cosine_similarity_score())
+        best_solutions = []
+        for solution in self.all_solutions:
+            if np.abs(solution.get_cosine_similarity_score() - best_solution.get_cosine_similarity_score()) < max_distance_from_best:
+                best_solutions.append(solution)
+        return best_solutions
 
     def _adapt_solutions_based_on_results(self):
         """Calculate the most frequent class in the best solutions and if frequency is high,
@@ -155,8 +143,8 @@ class BestSolutionsFinder:
         Also always returns the 3 best solutions
         """
 
-        classes_in_best_solutions = [classes[x]
-                                     for x in self.best_solutions_by_cross_encoder]
+        classes_in_best_solutions = [solution.class_name
+                                     for solution in self.ordered_best_solutions]
         # Initialize a dictionary of Counters for each level of component, recalculating directly
         direct_component_counts = {1: Counter(), 2: Counter(), 3: Counter()}
 
@@ -177,18 +165,63 @@ class BestSolutionsFinder:
                            count in direct_component_counts[counter_index].items()}
             frequencies_dict[counter_index] = frequencies
 
-        if len(self.best_solutions_by_cross_encoder) > 3:
+        best_classes_and_frequencies = []
+        solutions_that_represent_their_class = []
+        if len(self.ordered_best_solutions) > 3:
             # We try to find the most specific class that represents more than 50% of the best solutions
-            best_classes_and_frequencies = []
+
             for x in range(1, 4)[::-1]:
                 for item, frequency in frequencies_dict[x].items():
                     if frequency > 0.3:
-                        best_classes_and_frequencies.append((item, frequency))
+                        best_classes_and_frequencies.append(item)
                 if best_classes_and_frequencies:  # If a more specific class is very frequent, don't test the more general ones
                     break
-            return best_classes_and_frequencies, self.best_solutions_by_cross_encoder[:3]
-        else:
-            return self.best_solutions_by_cross_encoder
+
+            # I chose to find the class in the database by using a solution id that belongs to that class and the amount of components of that class.
+            # Example : if i tell you that the class is represented by the solution x which belongs to 'New energies + Photovoltaic solar + Sensor'
+            # and that the class I'm looking for has only two components, you should be able to find the class 'New energies + Photovoltaic solar'
+
+            for classe in best_classes_and_frequencies:
+                for solution in self.ordered_best_solutions:
+                    if classe == solution.class_name:
+                        solutions_that_represent_their_class.append(
+                            [len(classe.split(" + ")), solution])
+                        break
+
+        return best_classes_and_frequencies, self.ordered_best_solutions[:3], solutions_that_represent_their_class
+
+
+class Solution:
+
+    def __init__(self, title, class_name, preprocessed_class_name, id) -> None:
+        self.title = title
+        self.class_name = class_name
+        self.id = id
+        self.text = preprocessed_class_name + self.title
+        self.cosine_similarity_score = None
+        self.cross_encoded_score = None
+        self.embedding = None
+
+    def set_cosine_similarity_score(self, value: float):
+        self.cosine_similarity_score = value
+
+    def get_cosine_similarity_score(self):
+        return self.cosine_similarity_score
+
+    def set_cross_encoded_score(self, value: float):
+        self.cross_encoded_score = value
+
+    def get_cross_encoded_score(self):
+        return self.cross_encoded_score
+
+    def set_embedding(self, vector: torch.Tensor):
+        self.embedding = vector
+
+    def get_embedding(self):
+        return self.embedding
+
+    def __str__(self) -> str:
+        return str([self.title, self.class_name])
 
 
 def retrieve_all_solutions_and_classes(dictionnary):
@@ -201,26 +234,24 @@ def retrieve_all_solutions_and_classes(dictionnary):
         dictionnary : The dict from data.json
     """
     solutions = []
-    solutions_ids = {}
-    classes = []
     for i in range(len(dictionnary["label"])):
-        solutions.append(dictionnary["label_text"][i] +
-                         " " + dictionnary["text"][i])
-        solutions_ids[i] = dictionnary["solution_ids"]
-        classes.append(dictionnary["base_label_text"][i])
-    return solutions, classes
+        # solutions.append(dictionnary["label_text"][i] +
+        #                  " " + dictionnary["solution_text"][i])
+        # solutions_ids[i] = dictionnary["solution_ids"][i]
+        # classes.append(dictionnary["base_label_text"][i])
+        solution = Solution(
+            dictionnary["solution_text"][i], dictionnary["base_label_text"][i], dictionnary["label_text"][i], dictionnary["solution_ids"][i])
+        solutions.append(solution)
+    return solutions
 
 
 with open("./data/data.json", "r") as f:
     input_dict = json.load(f)
 
 preprocessor = Preprocessor()
-sentences, classes = retrieve_all_solutions_and_classes(input_dict)
-user_query = "I would like to size a solar panel"
+solutions = retrieve_all_solutions_and_classes(input_dict)
+user_query = "I would like to have optimized regulation of my cold unit"
 print(preprocessor(user_query))
-sentences.append(
-    preprocessor(user_query))  # We put the query at the end of the sentences
-
-
-finder = BestSolutionsFinder(sentences, classes)
-finder.relevant_solutions()
+preprocessed_query = preprocessor(user_query)
+finder = BestSolutionsFinder(solutions, preprocessed_query)
+print(finder.relevant_solutions())
