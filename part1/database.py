@@ -1,14 +1,14 @@
-import string
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import wordnet
-import nltk
 import json
 from googletrans import Translator
 import mysql.connector
 from mysql.connector import MySQLConnection
 from configparser import ConfigParser
 import pandas as pd
+import string
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
+import nltk
 
 
 class Database:
@@ -240,3 +240,94 @@ def read_gpt_to_file(infile, outfile, do_translate=False):
                        "label": labels, "label_text": label_texts}
         with open(outfile, "w+") as f:
             json.dump(dataset, f)
+
+
+class DatabaseObject:
+    db = Database()
+    cursor = db.database_connection.cursor()
+
+
+class Category(DatabaseObject):
+
+    def __init__(self, technologies: 'list[Technology]') -> None:
+        self.technologies = technologies
+
+    def __str__(self) -> str:
+        return str([str(techno) for techno in self.technologies])
+
+
+class Technology(DatabaseObject):
+
+    def __init__(self, id) -> None:
+        self.id = id
+        self.name = self._retrieve_name()
+        self.description = self._retrieve_data(1)
+        self.application = self._retrieve_data(2)
+        self.impact_opex = self._retrieve_data(11)
+        self.approche_systeme = self._retrieve_data(13)
+        self.capex_cout_global = self._retrieve_data(8)
+        self.caract_technique = self._retrieve_data(18)
+
+    def _retrieve_data(self, indexdictionnaire):
+        DatabaseObject.cursor.execute(
+            f"""SELECT traductiondictionnaire FROM tbldictionnaire WHERE codeappelobjet = {self.id} AND codelangue = 2 and typedictionnaire = 'tec' and indexdictionnaire = {indexdictionnaire}""")
+        data = DatabaseObject.cursor.fetchone()
+        if data:
+            return data[0]
+        else:
+            return "Aucune"
+
+    def __str__(self) -> str:
+        return f"{self.name} : {self.description}"
+
+
+class Solution(DatabaseObject):
+
+    def __init__(self, numsolution) -> None:
+        self.id = numsolution
+        self.category = self._category()
+        self.cursor = DatabaseObject.cursor
+        self.title = self._retrieve_data(1)
+        self.description = self._retrieve_data(2)
+        self.application = self._retrieve_data(5)
+        self.bilan_energie = self._retrieve_data(6)
+        self.regle_pouce_text = self._retrieve_data(10)
+        self.difficultes = self._retrieve_data(9)
+        self.gain_text = self._retrieve_data(11)
+        self.effets_positifs = self._retrieve_data(12)
+
+    def _category(self):
+        # 1 Getting the name of the first category associated with the solution and the id of the parent
+        self.cursor.execute(
+            f"""SELECT codetechno FROM tblsolution WHERE numsolution = {self.id}""")
+        technos = []
+        techno = self.cursor.fetchone()
+        print(f"First techno : {techno[0]}")
+        if techno:  # If the first category isn't empty, add it to the list of categories the techno belongs to
+            technos.append(techno[0])
+        while techno:  # While the last category has a parent, keep adding it to the list of categories the techno belongs to
+            self.cursor.execute(f"""
+                          SELECT codeparenttechno FROM tbltechno t
+                          JOIN tbldictionnaire d ON numtechno = codeappelobjet
+                          WHERE codelangue = 2 
+                          AND typedictionnaire = 'tec' 
+                          AND indexdictionnaire = 1
+                          AND codeappelobjet ={techno[0]}""")
+            techno = self.cursor.fetchone()
+            if techno:  # Don't add parent if it is null
+                print(f"New techno : {techno[0]}")
+                technos.append(techno[0])
+        list_of_technos = [Technology(x) for x in technos][::-1]
+        return Category(list_of_technos)
+
+    def _retrieve_data(self, indexdictionnaire):
+        DatabaseObject.cursor.execute(
+            f"""SELECT traductiondictionnaire FROM tbldictionnaire WHERE codeappelobjet = {self.id} AND codelangue = 2 and typedictionnaire = 'sol' and indexdictionnaire = {indexdictionnaire}""")
+        data = DatabaseObject.cursor.fetchone()
+        if data:
+            return data[0]
+        else:
+            return "Aucune"
+
+    def __str__(self) -> str:
+        return str(self.category)

@@ -1,12 +1,52 @@
 from transformers import AutoTokenizer, AutoModel
-from database import Preprocessor
 import torch
+import string
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
+import nltk
 import torch.nn.functional as F
 import numpy as np
 import json
 import time
 from collections import Counter
 from sentence_transformers import CrossEncoder
+
+
+class Preprocessor:
+    """Removes useless information from text (punctuation, stopwords, lemmatization)"""
+
+    def _pipeline(self, text: str):
+        text = text.lower()
+        text = self._remove_punctuation(text)
+        text = self._remove_stopwords(text)
+        text = self._lemmatize_words(text)
+        text = self._remove_specific_words(text)
+        return text
+
+    def __call__(self, text):
+        return self._pipeline(text)
+
+    def _remove_punctuation(self, text):
+        """custom function to remove the punctuation"""
+        return text.translate(str.maketrans('', '', string.punctuation))
+
+    def _remove_stopwords(self, text):
+        """custom function to remove the stopwords"""
+        STOPWORDS = set(stopwords.words('english'))
+        return " ".join([word for word in str(text).split() if word not in STOPWORDS])
+
+    def _lemmatize_words(self, text):
+        wordnet_map = {"N": wordnet.NOUN, "V": wordnet.VERB,
+                       "J": wordnet.ADJ, "R": wordnet.ADV}
+        lemmatizer = WordNetLemmatizer()
+        pos_tagged_text = nltk.pos_tag(text.split())
+        return " ".join([lemmatizer.lemmatize(word, wordnet_map.get(pos[0], wordnet.NOUN)) for word, pos in pos_tagged_text])
+
+    def _remove_specific_words(self, text):
+        BANNED_VOCAB = ["reduce", "optimize",
+                        "improve", "increase", "optimized", "would", "like"]
+        return " ".join([word for word in str(text).split() if word not in BANNED_VOCAB])
 
 
 class EmbeddingsModel:
@@ -77,7 +117,7 @@ class BestSolutionsFinder:
         start_time = time.time()
         # Calculate cosine similarity between each solution embedding and the query
         self._calculate_similarity_scores(user_query_embedding)
-        # Find the best solutions (we select solutions that are within 0.2 of the best)
+        # Find the best solutions using cosine similarity (we select solutions that are within 0.2 of the best)
         self.best_solutions = self._find_best_solutions(0.2)
         # We calculate another metric to make another ranking within the best solutions
         self._apply_cross_encoder()
@@ -168,7 +208,7 @@ class BestSolutionsFinder:
         best_classes_and_frequencies = []
         solutions_that_represent_their_class = []
         if len(self.ordered_best_solutions) > 3:
-            # We try to find the most specific class that represents more than 50% of the best solutions
+            # We try to find the most specific class that represents more than 30% of the best solutions
 
             for x in range(1, 4)[::-1]:
                 for item, frequency in frequencies_dict[x].items():
@@ -235,10 +275,6 @@ def retrieve_all_solutions_and_classes(dictionnary):
     """
     solutions = []
     for i in range(len(dictionnary["label"])):
-        # solutions.append(dictionnary["label_text"][i] +
-        #                  " " + dictionnary["solution_text"][i])
-        # solutions_ids[i] = dictionnary["solution_ids"][i]
-        # classes.append(dictionnary["base_label_text"][i])
         solution = Solution(
             dictionnary["solution_text"][i], dictionnary["base_label_text"][i], dictionnary["label_text"][i], dictionnary["solution_ids"][i])
         solutions.append(solution)
@@ -250,7 +286,7 @@ with open("./data/data.json", "r") as f:
 
 preprocessor = Preprocessor()
 solutions = retrieve_all_solutions_and_classes(input_dict)
-user_query = "I would like to have optimized regulation of my cold unit"
+user_query = "How to size a solar panel"
 print(preprocessor(user_query))
 preprocessed_query = preprocessor(user_query)
 finder = BestSolutionsFinder(solutions, preprocessed_query)
