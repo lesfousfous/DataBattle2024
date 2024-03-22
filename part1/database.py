@@ -375,7 +375,9 @@ class CaseStudy(DatabaseObject):
         self.techno3 = self._retrieve_numeric_data(property="codeTechno3")
 
     def retrieve_gain_solutions(self):
-        return [SolutionDB(id) for id in self._retrieve_gain_solutions_ids()]
+        ids = self._retrieve_gain_solutions_ids()
+        if ids != "Aucune":
+            return [SolutionDB(id) for id in ids]
 
     def _retrieve_gain_solutions_ids(self):
         DatabaseObject.cursor.execute(
@@ -387,7 +389,9 @@ class CaseStudy(DatabaseObject):
             return "Aucune"
 
     def retrieve_cout_solutions(self):
-        return [SolutionDB(id) for id in self._retrieve_cout_solutions_ids()]
+        ids = self._retrieve_cout_solutions_ids()
+        if ids != "Aucune":
+            return [SolutionDB(id) for id in ids]
 
     def _retrieve_cout_solutions_ids(self):
         DatabaseObject.cursor.execute(
