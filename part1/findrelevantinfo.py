@@ -124,6 +124,7 @@ class BestSolutionsFinder:
         self.ordered_best_solutions: 'list[Solution]'
         self.ordered_best_solutions = sorted(
             self.best_solutions, key=lambda solution: solution.get_cross_encoded_score(), reverse=True)
+
         # In all those solutions, find if a certain class (for instance Utilité + Froid) represent more than 30% and return it
         # Always returns the 3 best solutions
         three_best_solutions, solution_that_represents_a_class = self._adapt_solutions_based_on_results()
@@ -203,7 +204,6 @@ class BestSolutionsFinder:
             frequencies = {item: count / total_count for item,
                            count in direct_component_counts[counter_index].items()}
             frequencies_dict[counter_index] = frequencies
-
         best_classes_and_frequencies = []
         solutions_that_represent_their_class = []
         if len(self.ordered_best_solutions) > 3:
@@ -219,10 +219,9 @@ class BestSolutionsFinder:
             # I chose to find the class in the database by using a solution id that belongs to that class and the amount of components of that class.
             # Example : if i tell you that the class is represented by the solution x which belongs to 'New energies + Photovoltaic solar + Sensor'
             # and that the class I'm looking for has only two components, you should be able to find the class 'New energies + Photovoltaic solar'
-
             for classe in best_classes_and_frequencies:
                 for solution in self.ordered_best_solutions:
-                    if classe == solution.class_name:
+                    if classe in solution.class_name:
                         solutions_that_represent_their_class.append(
                             [len(classe.split(" + ")), solution])
                         break

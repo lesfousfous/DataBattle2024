@@ -7,7 +7,7 @@ with open("./data/data.json", "r") as f:
 
 preprocessor = Preprocessor()
 solutions = retrieve_all_solutions_and_classes(input_dict)
-user_query = "How does heat pump work ?"
+user_query = "How to size a solar panel ?"
 preprocessed_query = preprocessor(user_query)
 finder = BestSolutionsFinder(solutions, preprocessed_query)
 relevant_solutions_ids, class_info = finder.relevant_solutions()
