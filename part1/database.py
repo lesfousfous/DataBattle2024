@@ -9,6 +9,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 import nltk
+from bs4 import BeautifulSoup
 
 
 class Database:
@@ -246,11 +247,36 @@ class DatabaseObject:
     db = Database()
     cursor = db.database_connection.cursor()
 
+    def clean_up_text(text_extraction_func) -> str:
+        """A decorator I can just add to clean up the text that comes out of the database
+
+        Args:
+            text_extraction_func : a function that query the database for some text
+
+        Returns:
+            str: Cleaned up text
+        """
+        def wrapper(*args):
+            text = text_extraction_func(*args)
+            soup = BeautifulSoup(text, 'html.parser')
+
+            # Extracting and joining all non-empty text
+            extracted_text = ' '.join(soup.stripped_strings)
+            return extracted_text
+        return wrapper
+
 
 class Category(DatabaseObject):
 
     def __init__(self, technologies: 'list[Technology]') -> None:
         self.technologies = technologies
+
+    def retrieve_all_solutions(self):
+        techno_id = self.technologies[-1].id
+        DatabaseObject.cursor.execute(
+            f"""SELECT numsolution FROM tblsolution WHERE codetechno = {techno_id}""")
+        solution_ids = [x[0] for x in DatabaseObject.cursor.fetchall()]
+        return [SolutionDB(id) for id in solution_ids]
 
     def __str__(self) -> str:
         return str([techno.name for techno in self.technologies])
@@ -268,6 +294,7 @@ class Technology(DatabaseObject):
         self.capex_cout_global = self._retrieve_data(8)
         self.caract_technique = self._retrieve_data(18)
 
+    @DatabaseObject.clean_up_text
     def _retrieve_data(self, indexdictionnaire):
         DatabaseObject.cursor.execute(
             f"""SELECT traductiondictionnaire FROM tbldictionnaire WHERE codeappelobjet = {self.id} AND codelangue = 2 and typedictionnaire = 'tec' and indexdictionnaire = {indexdictionnaire}""")
@@ -318,6 +345,7 @@ class SolutionDB(DatabaseObject):
         list_of_technos = [Technology(x) for x in technos][::-1]
         return Category(list_of_technos)
 
+    @DatabaseObject.clean_up_text
     def _retrieve_data(self, indexdictionnaire):
         DatabaseObject.cursor.execute(
             f"""SELECT traductiondictionnaire FROM tbldictionnaire WHERE codeappelobjet = {self.id} AND codelangue = 2 and typedictionnaire = 'sol' and indexdictionnaire = {indexdictionnaire}""")
@@ -329,3 +357,101 @@ class SolutionDB(DatabaseObject):
 
     def __str__(self) -> str:
         return f"{str(self.category)}\n{self.title} :\n{self.description}\n"
+
+
+class CaseStudy(DatabaseObject):
+
+    def __init__(self, id) -> None:
+        self.id = id
+        self.reference = self._retrieve_reference()
+        self.secteur = self.reference.secteur
+        self.eco_energie = self._retrieve_numeric_data(property="energierex")
+        self.gain_financier = self._retrieve_numeric_data(
+            property="gainfinancierrex")
+        self.gaz_effet_serre = self._retrieve_numeric_data(property="gesrex")
+        self.tri = self._retrieve_numeric_data(property="trirex")
+        self.ratio_eco_energie = self._retrieve_numeric_data(
+            property="ratiogainrex")
+        self.capex = self._retrieve_numeric_data(property="capexrex")
+        self.techno1 = self._retrieve_numeric_data(property="codeTechno1")
+        self.techno2 = self._retrieve_numeric_data(property="codeTechno2")
+        self.techno3 = self._retrieve_numeric_data(property="codeTechno3")
+
+    def retrieve_gain_solutions(self):
+        return [SolutionDB(id) for id in self._retrieve_gain_solutions_ids()]
+
+    def _retrieve_gain_solutions_ids(self):
+        DatabaseObject.cursor.execute(
+            f"""SELECT codesolution FROM tblgainrex WHERE coderex = {self.id}""")
+        data = DatabaseObject.cursor.fetchall()
+        if data:
+            return [x[0] for x in data]
+        else:
+            return "Aucune"
+
+    def retrieve_cout_solutions(self):
+        return [SolutionDB(id) for id in self._retrieve_cout_solutions_ids()]
+
+    def _retrieve_cout_solutions_ids(self):
+        DatabaseObject.cursor.execute(
+            f"""SELECT codesolution FROM tblcoutrex WHERE coderex = {self.id}""")
+        data = DatabaseObject.cursor.fetchall()
+        if data:
+            return [x[0] for x in data]
+        else:
+            return "Aucune"
+
+    def _retrieve_numeric_data(self, property: str):
+        DatabaseObject.cursor.execute(
+            f"""SELECT {property} FROM tblrex WHERE numrex = {self.id}""")
+        data = DatabaseObject.cursor.fetchone()
+        if data:
+            return data[0]
+        else:
+            return "Aucune"
+
+    def _retrieve_reference(self):
+        ref_id = self._retrieve_numeric_data("codereference")
+        return Reference(ref_id)
+
+
+class Reference(DatabaseObject):
+
+    def __init__(self, id) -> None:
+        self.id = id
+        self.secteur = self._retrieve_numeric_data("codesecteur")
+        self.date = self._retrieve_numeric_data("datereference")
+        self.region = self._retrieve_numeric_data("coderegion")
+
+    def _retrieve_numeric_data(self, property: str):
+        DatabaseObject.cursor.execute(
+            f"""SELECT {property} FROM tblreference WHERE numreference = {self.id}""")
+        data = DatabaseObject.cursor.fetchone()
+        if data:
+            return data[0]
+        else:
+            return "Aucune"
+
+    def __str__(self) -> str:
+        return f"Date : {self.date}\nRegion : {self.region}"
+
+
+class Secteur(DatabaseObject):
+
+    def __init__(self, id) -> None:
+        self.id = id
+
+    def find_all_case_studies(self):
+        
+
+    def find_all_references(self):
+        return [Reference(id) for id in self._find_all_references_ids()]
+
+    def _find_all_references_ids(self):
+        DatabaseObject.cursor.execute(
+            f"""SELECT numreference FROM tblreference WHERE codesecteur = {self.id}""")
+        data = DatabaseObject.cursor.fetchall()
+        if data:
+            return [x[0] for x in data]
+        else:
+            return "Aucune"

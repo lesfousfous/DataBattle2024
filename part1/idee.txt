@@ -1,0 +1,1 @@
+Si on détecte un secteur dans la query, on return toutes les solutions pour ce secteur rangées dans leur catégorie

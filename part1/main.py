@@ -24,5 +24,4 @@ def find_techno_id(class_info):
     return category[-1].id
 
 
-# print(find_techno_id(class_info[0]))
 print(Technology(find_techno_id(class_info[0])))

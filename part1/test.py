@@ -1,4 +1,5 @@
-from database import SolutionDB
+from database import SolutionDB, CaseStudy, Reference
 
-sol = SolutionDB(1454)
-print(sol)
+ref = Reference(2187)
+
+print(ref)
