@@ -456,14 +456,18 @@ class Secteur(DatabaseObject):
         self.id = id
 
     def find_all_case_studies(self):
-        references = self.find_all_references()
-        case_study_ids = []
-        for reference in references:
-            new_case_studies = self._find_case_studies_for_one_reference(
-                reference.id)
-            if new_case_studies != "Aucune":
-                case_study_ids.extend(new_case_studies)
-        return [CaseStudy(id) for id in case_study_ids]
+        try:
+            return self.case_studies
+        except AttributeError:
+            references = self.find_all_references()
+            case_study_ids = []
+            for reference in references:
+                new_case_studies = self._find_case_studies_for_one_reference(
+                    reference.id)
+                if new_case_studies != "Aucune":
+                    case_study_ids.extend(new_case_studies)
+            self.case_studies = [CaseStudy(id) for id in case_study_ids]
+            return self.case_studies
 
     def _find_case_studies_for_one_reference(self, reference_id):
         DatabaseObject.cursor.execute(
@@ -475,7 +479,12 @@ class Secteur(DatabaseObject):
             return "Aucune"
 
     def find_all_references(self):
-        return [Reference(id) for id in self._find_all_references_ids()]
+        try:
+            return self.references
+        except AttributeError:  # If self.references doesn't exist already
+            self.references = [Reference(id)
+                               for id in self._find_all_references_ids()]
+            return self.references
 
     def _find_all_references_ids(self):
         DatabaseObject.cursor.execute(
@@ -485,3 +494,37 @@ class Secteur(DatabaseObject):
             return [x[0] for x in data]
         else:
             return "Aucune"
+
+    def find_all_solutions(self):
+        try:
+            return self.solutions
+        except AttributeError:
+            case_studies = self.find_all_case_studies()
+            solutions = []
+            for case_study in case_studies:
+                cout_sols = case_study.retrieve_cout_solutions()
+                if cout_sols:  # Cout sols can be Non
+                    solutions.extend(cout_sols)
+                gain_sols = case_study.retrieve_gain_solutions()
+                if gain_sols:
+                    solutions.extend(gain_sols)
+            self.solutions = solutions
+            return solutions
+
+    def find_3_most_frequent_solutions(self):
+        # Dictionary to count duplicates
+        duplicate_counts = {}
+
+        for solution in self.find_all_solutions():
+            # If the solution's id is already in the dictionary, increment its count
+            if solution.id in duplicate_counts:
+                duplicate_counts[solution.id] += 1
+            else:
+                # Otherwise, add it to the dictionary with a count of 1
+                duplicate_counts[solution.id] = 1
+
+        top_3_ids = sorted(
+            duplicate_counts, key=duplicate_counts.get, reverse=True)[:3]
+
+        for id in top_3_ids:
+            print(SolutionDB(id))
