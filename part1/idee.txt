@@ -1,1 +1,8 @@
 Si on détecte un secteur dans la query, on return toutes les solutions pour ce secteur rangées dans leur catégorie
+
+On peut ajouter l'embedding de chaque solution à la bdd. Comme ça on a 4sec de calc en moins à chaque query.
+
+Pour avoir une query spécialisée en un secteur, on peut avoir un champ sur l'interface où l'utilisateur peut préciser son secteur.
+Un champ ou l'utilisateur selectionne un secteur existant comme ça il n'y a pas besoin d'algo pour le détecter.
+Ensuite, on peut appliquer une recherche des meilleurs solutions grâce à la méthode générale parmi les solutions qui ont déja été utilisées dans ce secteur.
+L'utilisateur peut aussi préciser uniquement le secteur et alors on lui return les solutions les plus fréquentes pour son secteur.

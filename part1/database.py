@@ -526,5 +526,4 @@ class Secteur(DatabaseObject):
         top_3_ids = sorted(
             duplicate_counts, key=duplicate_counts.get, reverse=True)[:3]
 
-        for id in top_3_ids:
-            print(SolutionDB(id))
+        return [SolutionDB(id) for id in top_3_ids]
