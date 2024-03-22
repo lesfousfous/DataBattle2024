@@ -1,5 +1,7 @@
-from database import SolutionDB, CaseStudy, Reference
+from database import SolutionDB, CaseStudy, Reference, Secteur
 
-ref = Reference(2187)
+secteur = Secteur(7)
 
-print(ref)
+case_studies = secteur.find_all_case_studies()
+for x in case_studies:
+    print(x.eco_energie)

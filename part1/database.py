@@ -142,7 +142,6 @@ class SolutionsAndCategoriesData:
                 solutions_dict[class_id]["class_name"] = class_name
             solutions_dict[class_id]["solutions"].append(
                 (solution_id, solution_name))
-            # print(f"Added {solution_name} to {class_name} / {class_id}")
         return solutions_dict
 
     def _retrieve_parent_technos(self, first_category_of_the_solution):
@@ -363,8 +362,6 @@ class CaseStudy(DatabaseObject):
 
     def __init__(self, id) -> None:
         self.id = id
-        self.reference = self._retrieve_reference()
-        self.secteur = self.reference.secteur
         self.eco_energie = self._retrieve_numeric_data(property="energierex")
         self.gain_financier = self._retrieve_numeric_data(
             property="gainfinancierrex")
@@ -410,7 +407,17 @@ class CaseStudy(DatabaseObject):
         else:
             return "Aucune"
 
-    def _retrieve_reference(self):
+    @DatabaseObject.clean_up_text
+    def _retrieve_text_data(self, indexdictionnaire):
+        DatabaseObject.cursor.execute(
+            f"""SELECT traductiondictionnaire FROM tbldictionnaire WHERE codeappelobjet = {self.id} AND codelangue = 2 and typedictionnaire = 'rex' and indexdictionnaire = {indexdictionnaire}""")
+        data = DatabaseObject.cursor.fetchone()
+        if data:
+            return data[0]
+        else:
+            return "Aucune"
+
+    def retrieve_reference(self):
         ref_id = self._retrieve_numeric_data("codereference")
         return Reference(ref_id)
 
@@ -432,6 +439,9 @@ class Reference(DatabaseObject):
         else:
             return "Aucune"
 
+    def retrieve_case_study(self):
+        return self._retrieve_numeric_data("coderex")
+
     def __str__(self) -> str:
         return f"Date : {self.date}\nRegion : {self.region}"
 
@@ -442,7 +452,23 @@ class Secteur(DatabaseObject):
         self.id = id
 
     def find_all_case_studies(self):
-        
+        references = self.find_all_references()
+        case_study_ids = []
+        for reference in references:
+            new_case_studies = self._find_case_studies_for_one_reference(
+                reference.id)
+            if new_case_studies != "Aucune":
+                case_study_ids.extend(new_case_studies)
+        return [CaseStudy(id) for id in case_study_ids]
+
+    def _find_case_studies_for_one_reference(self, reference_id):
+        DatabaseObject.cursor.execute(
+            f"""SELECT numrex FROM tblrex WHERE codereference = {reference_id}""")
+        data = DatabaseObject.cursor.fetchall()
+        if data:
+            return [x[0] for x in data]
+        else:
+            return "Aucune"
 
     def find_all_references(self):
         return [Reference(id) for id in self._find_all_references_ids()]
