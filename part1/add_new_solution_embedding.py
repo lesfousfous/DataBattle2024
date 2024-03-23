@@ -48,8 +48,8 @@ def add_solution_embedding(solution_id: int):
     preprocessor = Preprocessor()
     print('Translating...')
 
-    solutions_text = " + ".join(
-        [x.name for x in solution.category.technologies][1:]) + " " + solution.title
+    solutions_text = preprocessor(" + ".join(
+        [x.name for x in solution.category.technologies][1:]) + " " + solution.title)
     translated = translator.translate(solutions_text, dest="en")
     translated_solutions_text = translated.text
 
