@@ -1,4 +1,4 @@
-from database import SolutionDB, Preprocessor, Database, SolutionDBList
+from database import SolutionDB, Preprocessor, Database
 from findrelevantinfo import EmbeddingsModel
 from googletrans import Translator
 

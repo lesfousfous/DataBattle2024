@@ -1,8 +1,6 @@
-from googletrans import Translator
 import mysql.connector
 from mysql.connector import MySQLConnection
 from configparser import ConfigParser
-import pandas as pd
 import string
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
