@@ -6,3 +6,7 @@ Pour avoir une query spécialisée en un secteur, on peut avoir un champ sur l'i
 Un champ ou l'utilisateur selectionne un secteur existant comme ça il n'y a pas besoin d'algo pour le détecter.
 Ensuite, on peut appliquer une recherche des meilleurs solutions grâce à la méthode générale parmi les solutions qui ont déja été utilisées dans ce secteur.
 L'utilisateur peut aussi préciser uniquement le secteur et alors on lui return les solutions les plus fréquentes pour son secteur.
+
+Ajouter un search suggestion (genre on propose des mots qui peuvent suivre dans la query)
+
+Si la partie 1 propose une catégorie complète, il faut que l'utilisateur puisse sélectionner rapidement les solutions qui l'intéresse.

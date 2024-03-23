@@ -10,42 +10,7 @@ import numpy as np
 import time
 from collections import Counter
 from sentence_transformers import CrossEncoder
-
-
-class Preprocessor:
-    """Removes useless information from text (punctuation, stopwords, lemmatization)"""
-
-    def _pipeline(self, text: str):
-        text = text.lower()
-        text = self._remove_punctuation(text)
-        text = self._remove_stopwords(text)
-        text = self._lemmatize_words(text)
-        text = self._remove_specific_words(text)
-        return text
-
-    def __call__(self, text):
-        return self._pipeline(text)
-
-    def _remove_punctuation(self, text):
-        """custom function to remove the punctuation"""
-        return text.translate(str.maketrans('', '', string.punctuation))
-
-    def _remove_stopwords(self, text):
-        """custom function to remove the stopwords"""
-        STOPWORDS = set(stopwords.words('english'))
-        return " ".join([word for word in str(text).split() if word not in STOPWORDS])
-
-    def _lemmatize_words(self, text):
-        wordnet_map = {"N": wordnet.NOUN, "V": wordnet.VERB,
-                       "J": wordnet.ADJ, "R": wordnet.ADV}
-        lemmatizer = WordNetLemmatizer()
-        pos_tagged_text = nltk.pos_tag(text.split())
-        return " ".join([lemmatizer.lemmatize(word, wordnet_map.get(pos[0], wordnet.NOUN)) for word, pos in pos_tagged_text])
-
-    def _remove_specific_words(self, text):
-        BANNED_VOCAB = ["reduce", "optimize",
-                        "improve", "increase", "optimized", "would", "like"]
-        return " ".join([word for word in str(text).split() if word not in BANNED_VOCAB])
+from database import SolutionDBList, SolutionForInference
 
 
 class EmbeddingsModel:
@@ -100,7 +65,7 @@ class BestSolutionsFinder:
     then uses cosine similarity to find the most relevant solutions and refines that ranking by applying a cross encoder
     """
 
-    def __init__(self, all_solutions: 'list[Solution]', user_query: str) -> None:
+    def __init__(self, all_solutions: 'list[SolutionForInference]', user_query: str) -> None:
         """
         Args:
             all_solutions (list[str]): The list of all solution titles and the user query as the last element
@@ -111,23 +76,31 @@ class BestSolutionsFinder:
 
     def relevant_solutions(self):
         # Turn the solutions and user query into embeddings
-        self._calc_solution_embeddings()
+        # self._calc_solution_embeddings()
         user_query_embedding = self.model(self.user_query)[0]
-        start_time = time.time()
         # Calculate cosine similarity between each solution embedding and the query
+
         self._calculate_similarity_scores(user_query_embedding)
+
         # Find the best solutions using cosine similarity (we select solutions that are within 0.2 of the best)
+
         self.best_solutions = self._find_best_solutions(0.2)
+
         # We calculate another metric to make another ranking within the best solutions
+
         self._apply_cross_encoder()
+
         # sort on the cross encoding score (higher is better)
-        self.ordered_best_solutions: 'list[Solution]'
+
+        self.ordered_best_solutions: 'list[SolutionForInference]'
         self.ordered_best_solutions = sorted(
             self.best_solutions, key=lambda solution: solution.get_cross_encoded_score(), reverse=True)
 
         # In all those solutions, find if a certain class (for instance Utilité + Froid) represent more than 30% and return it
         # Always returns the 3 best solutions
+
         three_best_solutions, solution_that_represents_a_class = self._adapt_solutions_based_on_results()
+
         # Show some visual output
         # print(
         #     f"The rest of the processing took {time.time() - start_time} seconds\n")
@@ -137,11 +110,11 @@ class BestSolutionsFinder:
         #     f"Here are a few relevant solutions for your query : {[str(solution) for solution in three_best_solutions]}")
         return [solution.id for solution in three_best_solutions], solution_that_represents_a_class
 
-    def _calc_solution_embeddings(self):
-        solution_texts = [solution.text for solution in self.all_solutions]
-        embeddings = self.model(solution_texts)
-        for i in range(len(embeddings)):
-            self.all_solutions[i].set_embedding(embeddings[i])
+    # def _calc_solution_embeddings(self):
+    #     solution_texts = [solution.text for solution in self.all_solutions]
+    #     embeddings = self.model(solution_texts)
+    #     for i in range(len(embeddings)):
+    #         self.all_solutions[i].set_embedding(embeddings[i])
 
     def _cosine_similarity(self, vec1, vec2):
         """Calculate the cosine similarity between two vectors."""
@@ -168,7 +141,7 @@ class BestSolutionsFinder:
         for i in range(len(scores)):
             self.best_solutions[i].set_cross_encoded_score(scores[i])
 
-    def _find_best_solutions(self, max_distance_from_best: float) -> 'list[Solution]':
+    def _find_best_solutions(self, max_distance_from_best: float) -> 'list[SolutionForInference]':
         best_solution = max(
             self.all_solutions, key=lambda solution: solution.get_cosine_similarity_score())
         best_solutions = []
@@ -230,51 +203,28 @@ class BestSolutionsFinder:
         return self.ordered_best_solutions[:3], solutions_that_represent_their_class
 
 
-class Solution:
+# def retrieve_all_solutions_and_classes(dictionnary):
+#     """For each solution in the data.json file, add its class before its name
+#     For instance, the solution 'photovoltaic solar panel' belongs to the class 'new energy photovoltaic solar sensor', so its full name will be :
+#     new energy photovoltaic solar sensor photovoltaic solar panel
 
-    def __init__(self, title, class_name, preprocessed_class_name, id) -> None:
-        self.title = title
-        self.class_name = class_name
-        self.id = id
-        self.text = preprocessed_class_name + self.title
-        self.cosine_similarity_score = None
-        self.cross_encoded_score = None
-        self.embedding = None
-
-    def set_cosine_similarity_score(self, value: float):
-        self.cosine_similarity_score = value
-
-    def get_cosine_similarity_score(self):
-        return self.cosine_similarity_score
-
-    def set_cross_encoded_score(self, value: float):
-        self.cross_encoded_score = value
-
-    def get_cross_encoded_score(self):
-        return self.cross_encoded_score
-
-    def set_embedding(self, vector: torch.Tensor):
-        self.embedding = vector
-
-    def get_embedding(self):
-        return self.embedding
-
-    def __str__(self) -> str:
-        return str([self.title, self.class_name])
+#     We do this because the category the solution belongs to usually contains useful data for finding out if it relevant.
+#     Args:
+#         dictionnary : The dict from data.json
+#     """
+#     solutions = []
+#     for i in range(len(dictionnary["label"])):
+#         solution = SolutionForInference(
+#             dictionnary["solution_text"][i], dictionnary["base_label_text"][i], dictionnary["label_text"][i], dictionnary["solution_ids"][i])
+#         solutions.append(solution)
+#     return solutions
 
 
-def retrieve_all_solutions_and_classes(dictionnary):
-    """For each solution in the data.json file, add its class before its name
-    For instance, the solution 'photovoltaic solar panel' belongs to the class 'new energy photovoltaic solar sensor', so its full name will be :
-    new energy photovoltaic solar sensor photovoltaic solar panel 
-
-    We do this because the category the solution belongs to usually contains useful data for finding out if it relevant.
-    Args:
-        dictionnary : The dict from data.json
-    """
-    solutions = []
-    for i in range(len(dictionnary["label"])):
-        solution = Solution(
-            dictionnary["solution_text"][i], dictionnary["base_label_text"][i], dictionnary["label_text"][i], dictionnary["solution_ids"][i])
-        solutions.append(solution)
-    return solutions
+def change_solutions_format(solutions: 'SolutionDBList'):
+    solutions_for_inference = []
+    titles = solutions.get_titles()
+    categories = solutions.get_categories()
+    for i in range(len(solutions.solutions)):
+        solutions_for_inference.append(SolutionForInference(
+            solutions.solutions[i].get_title(), categories[i].get_name(), solutions.solutions[i].get_id()))
+    return solutions_for_inference

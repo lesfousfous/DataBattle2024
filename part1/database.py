@@ -1,4 +1,3 @@
-import json
 from googletrans import Translator
 import mysql.connector
 from mysql.connector import MySQLConnection
@@ -10,6 +9,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 import nltk
 from bs4 import BeautifulSoup
+import torch
 
 
 class Database:
@@ -27,46 +27,6 @@ class Database:
             database=config_file['mysqlDB']['db'],
         )
         return mydb
-
-
-class Table():
-
-    def __init__(self, name: str, database: Database) -> None:
-        self.database_connection = database.database_connection
-        self.name = name
-        self.dataframe = self._load_solution_data_from_db()
-
-    def _load_solution_data_from_db(self):
-        data = {}
-        keys = self._load_all_keys_of_table()
-        for x in keys:
-            data[x] = self._get_attribute(x)
-
-        dataframe = Table._dict_to_dataframe(data)
-        return dataframe
-
-    def _dict_to_dataframe(dictionnary):
-        dataframe = pd.DataFrame(dictionnary)
-        return dataframe
-
-    def _get_attribute(self, attribute_name):
-        cursor = self.database_connection.cursor()
-        cursor.execute(f"SELECT {attribute_name} FROM {self.name};")
-        attribute_data = [column_name[0] for column_name in cursor.fetchall()]
-        cursor.close()
-        return attribute_data
-
-    def _load_all_keys_of_table(self):
-        cursor = self.database_connection.cursor()
-        cursor.execute(f"SELECT column_name FROM information_schema.columns \
-                          WHERE table_schema = 'kerdos'\
-                          AND table_name = '{self.name}';")
-        keys = [column_name[0] for column_name in cursor.fetchall()]
-        cursor.close()
-        return keys
-
-    def __str__(self) -> str:
-        return self.dataframe.__str__()
 
 
 class Preprocessor:
@@ -105,141 +65,67 @@ class Preprocessor:
         return " ".join([word for word in str(text).split() if word not in BANNED_VOCAB])
 
 
-class SolutionsAndCategoriesData:
+# class SolutionsAndCategoriesData:
 
-    def __init__(self, database: Database) -> None:
-        self.database = database
-        self.cursor = database.database_connection.cursor()
-        self.solutions = self._init_solutions()
-        self.data = self._init_classes()
+#     def __init__(self, database: Database) -> None:
+#         self.database = database
+#         self.cursor = database.database_connection.cursor()
+#         self.solutions = self._init_solutions()
+#         self.data = self._init_classes()
 
-    def _init_solutions(self):
-        """Returns all list of all the solutions in the database and the id of the first category/techno above it"""
-        self.cursor.execute("""SELECT traductiondictionnaire, numtechno, numsolution FROM tblsolution 
-                    JOIN tbltechno ON codetechno = numtechno 
-                    JOIN tbldictionnaire ON numsolution = codeappelobjet
-                    WHERE typedictionnaire='sol'
-                    AND codelangue=2
-                    AND indexdictionnaire=1""")
-        all_solutions = self.cursor.fetchall()
-        return all_solutions
+#     def _init_solutions(self):
+#         """Returns all list of all the solutions in the database and the id of the first category/techno above it"""
+#         self.cursor.execute("""SELECT traductiondictionnaire, numtechno, numsolution FROM tblsolution
+#                     JOIN tbltechno ON codetechno = numtechno
+#                     JOIN tbldictionnaire ON numsolution = codeappelobjet
+#                     WHERE typedictionnaire='sol'
+#                     AND codelangue=2
+#                     AND indexdictionnaire=1""")
+#         all_solutions = self.cursor.fetchall()
+#         return all_solutions
 
-    def _init_classes(self):
-        """Organize all solutions within their category
+#     def _init_classes(self):
+#         """Organize all solutions within their category
 
-        Returns:
-            solutions_dict : Dictionnary of the following format {"class_index" : [{"text-label" : name of the class, "solution" : name of the solution}]}
-        """
-        class_ids = [category_id for _, category_id, _ in self.solutions]
-        init_values = [{"class_name": "Aucune", "solutions": []}
-                       for x in range(len(class_ids))]
-        solutions_dict = dict((key, value)
-                              for key, value in zip(class_ids, init_values))
-        for solution_name, class_id, solution_id in self.solutions:
-            parent_technologies = self._retrieve_parent_technos(class_id)
-            class_name = " + ".join(parent_technologies[::-1])
-            if class_name:
-                solutions_dict[class_id]["class_name"] = class_name
-            solutions_dict[class_id]["solutions"].append(
-                (solution_id, solution_name))
-        return solutions_dict
+#         Returns:
+#             solutions_dict : Dictionnary of the following format {"class_index" : [{"text-label" : name of the class, "solution" : name of the solution}]}
+#         """
+#         class_ids = [category_id for _, category_id, _ in self.solutions]
+#         init_values = [{"class_name": "Aucune", "solutions": []}
+#                        for x in range(len(class_ids))]
+#         solutions_dict = dict((key, value)
+#                               for key, value in zip(class_ids, init_values))
+#         for solution_name, class_id, solution_id in self.solutions:
+#             parent_technologies = self._retrieve_parent_technos(class_id)
+#             class_name = " + ".join(parent_technologies[::-1])
+#             if class_name:
+#                 solutions_dict[class_id]["class_name"] = class_name
+#             solutions_dict[class_id]["solutions"].append(
+#                 (solution_id, solution_name))
+#         return solutions_dict
 
-    def _retrieve_parent_technos(self, first_category_of_the_solution):
-        techno_associe = []
-        # 1 Getting the name of the first category associated with the solution and the id of the parent
-        self.cursor.execute(
-            f"""SELECT numtechno, traductiondictionnaire, codeparenttechno FROM tbltechno t
-            JOIN tbldictionnaire d ON numtechno = codeappelobjet
-            WHERE codelangue = 2 AND typedictionnaire = 'tec' AND codeappelobjet ={first_category_of_the_solution}""")
-        techno = self.cursor.fetchall()
-        if techno:  # If the first category isn't empty, add it to the list of categories the techno belongs to
-            techno_associe.append(techno[0][1])
-        while techno:  # While the last category has a parent, keep adding it to the list of categories the techno belongs to
-            code_techno_parent = techno[0][2]
-            self.cursor.execute(f"""
-                          SELECT numtechno, traductiondictionnaire, codeparenttechno FROM tbltechno t
-                          JOIN tbldictionnaire d ON numtechno = codeappelobjet
-                          WHERE codelangue = 2 AND typedictionnaire = 'tec' 
-                          AND indexdictionnaire = 1
-                          AND codeappelobjet ={code_techno_parent}""")
-            techno = self.cursor.fetchall()
-            if techno:  # Don't add parent if it is null
-                techno_associe.append(techno[0][1])
-        return techno_associe
-
-    def translate_data_to_file_for_gpt(self):
-        translator = Translator()
-        print("Translating...")
-        with open("translated_data.txt", "w+") as f:
-            for class_id in self.data.keys():
-                class_name = self.data[class_id]["class_name"]
-                class_name_translated = translator.translate(
-                    class_name).text
-                f.write(f"{class_id} : {class_name_translated}\n")
-                solutions_translated = translator.translate(
-                    self.data[class_id]["solutions"])
-                for solution in solutions_translated:
-                    f.write(f"{solution.text}\n")
-                f.write("\n")
-
-    def export_data_to_json(self):
-        solutions_text = []
-        solution_ids = []
-        label = []
-        label_text = []
-        for class_id in self.data.keys():
-            class_name = self.data[class_id]["class_name"]
-            for solution in self.data[class_id]["solutions"]:
-                solutions_text.append(solution[1])
-                solution_ids.append(solution[0])
-                label.append(class_id)
-                label_text.append(class_name)
-        translator = Translator()
-        preprocessor = Preprocessor()
-        print('Translating...')
-        solutions_text = translator.translate(solutions_text, dest="en")
-        solutions_text = [preprocessor(x.text) for x in solutions_text]
-        label_text = translator.translate(label_text, dest="en")
-        processed_label_text = [preprocessor(x.text) for x in label_text]
-        unmodified_label_text = [x.text for x in label_text]
-        dataset = {"solution_text": solutions_text,
-                   "solution_ids": solution_ids,
-                   "label": label,
-                   "label_text": processed_label_text,
-                   "base_label_text": unmodified_label_text}
-        with open("./data/data.json", "w") as outfile:
-            json.dump(dataset, outfile)
-
-
-def read_gpt_to_file(infile, outfile, do_translate=False):
-    with open(infile, "r") as f:
-        file = f.readlines()
-        labels = []
-        label_texts = []
-        questions_english = []
-        for i in range(len(file)):
-            if "Category" in file[i]:
-                label, label_text = file[i].split(":")
-                label = int(label.split(" ")[1])
-            elif "Question" in file[i] or "Demand" in file[i]:
-                questions_english.append(file[i+2])
-                labels.append(label)
-                label_texts.append(label_text)
-                questions_english.append(file[i+3])
-                labels.append(label)
-                label_texts.append(label_text)
-        if do_translate:
-            translator = Translator()
-            print('Translating...')
-            question_fr = translator.translate(questions_english, dest="fr")
-            question_fr = [x.text for x in question_fr]
-            dataset = {"text": question_fr,
-                       "label": labels, "label_text": label_texts}
-        else:
-            dataset = {"text": questions_english,
-                       "label": labels, "label_text": label_texts}
-        with open(outfile, "w+") as f:
-            json.dump(dataset, f)
+#     def _retrieve_parent_technos(self, first_category_of_the_solution):
+#         techno_associe = []
+#         # 1 Getting the name of the first category associated with the solution and the id of the parent
+#         self.cursor.execute(
+#             f"""SELECT numtechno, traductiondictionnaire, codeparenttechno FROM tbltechno t
+#             JOIN tbldictionnaire d ON numtechno = codeappelobjet
+#             WHERE codelangue = 2 AND typedictionnaire = 'tec' AND codeappelobjet ={first_category_of_the_solution}""")
+#         techno = self.cursor.fetchall()
+#         if techno:  # If the first category isn't empty, add it to the list of categories the techno belongs to
+#             techno_associe.append(techno[0][1])
+#         while techno:  # While the last category has a parent, keep adding it to the list of categories the techno belongs to
+#             code_techno_parent = techno[0][2]
+#             self.cursor.execute(f"""
+#                           SELECT numtechno, traductiondictionnaire, codeparenttechno FROM tbltechno t
+#                           JOIN tbldictionnaire d ON numtechno = codeappelobjet
+#                           WHERE codelangue = 2 AND typedictionnaire = 'tec'
+#                           AND indexdictionnaire = 1
+#                           AND codeappelobjet ={code_techno_parent}""")
+#             techno = self.cursor.fetchall()
+#             if techno:  # Don't add parent if it is null
+#                 techno_associe.append(techno[0][1])
+#         return techno_associe
 
 
 class DatabaseObject:
@@ -277,21 +163,26 @@ class Category(DatabaseObject):
         solution_ids = [x[0] for x in DatabaseObject.cursor.fetchall()]
         return [SolutionDB(id) for id in solution_ids]
 
+    def get_technologies(self):
+        return self.technologies
+
+    def get_name(self):
+        try:
+            return self.name
+        except AttributeError:
+            self.name = " + ".join([techno.get_name()
+                                   for techno in self.technologies[1:]])
+            return self.name
+
     def __str__(self) -> str:
-        return str([techno.name for techno in self.technologies])
+        # We don't keep the base category Aucune
+        return self.get_name()
 
 
 class Technology(DatabaseObject):
 
     def __init__(self, id) -> None:
         self.id = id
-        self.name = self._retrieve_data(1)
-        self.description = self._retrieve_data(2)
-        self.application = self._retrieve_data(3)
-        self.impact_opex = self._retrieve_data(11)
-        self.approche_systeme = self._retrieve_data(13)
-        self.capex_cout_global = self._retrieve_data(8)
-        self.caract_technique = self._retrieve_data(18)
 
     @DatabaseObject.clean_up_text
     def _retrieve_data(self, indexdictionnaire):
@@ -303,24 +194,67 @@ class Technology(DatabaseObject):
         else:
             return "Aucune"
 
+    def get_id(self):
+        return self.id
+
+    def get_name(self):
+        try:
+            return self.name
+        except AttributeError:
+            self.name = self._retrieve_data(1)
+            return self.name
+
+    def get_description(self):
+        try:
+            return self.description
+        except AttributeError:
+            self.description = self._retrieve_data(2)
+            return self.description
+
+    def get_application(self):
+        try:
+            return self.application
+        except AttributeError:
+            self.application = self._retrieve_data(3)
+            return self.application
+
+    def get_impact_opex(self):
+        try:
+            return self.impact_opex
+        except AttributeError:
+            self.impact_opex = self._retrieve_data(11)
+            return self.impact_opex
+
+    def get_approche_systeme(self):
+        try:
+            return self.approche_systeme
+        except AttributeError:
+            self.approche_systeme = self._retrieve_data(13)
+            return self.approche_systeme
+
+    def get_capex_cout_global(self):
+        try:
+            return self.capex_cout_global
+        except AttributeError:
+            self.capex_cout_global = self._retrieve_data(8)
+            return self.capex_cout_global
+
+    def get_carac_technique(self):
+        try:
+            return self.caract_technique
+        except AttributeError:
+            self.caract_technique = self._retrieve_data(18)
+            return self.caract_technique
+
     def __str__(self) -> str:
-        return f"{self.name} : {self.description}"
+        return f"{self.get_name()} : {self.get_description()}"
 
 
 class SolutionDB(DatabaseObject):
 
     def __init__(self, numsolution) -> None:
         self.id = numsolution
-        self.category = self._category()
         self.cursor = DatabaseObject.cursor
-        self.title = self._retrieve_data(1)
-        self.description = self._retrieve_data(2)
-        self.application = self._retrieve_data(5)
-        self.bilan_energie = self._retrieve_data(6)
-        self.regle_pouce_text = self._retrieve_data(10)
-        self.difficultes = self._retrieve_data(9)
-        self.gain_text = self._retrieve_data(11)
-        self.effets_positifs = self._retrieve_data(12)
 
     def _category(self):
         # 1 Getting the name of the first category associated with the solution and the id of the parent
@@ -354,8 +288,74 @@ class SolutionDB(DatabaseObject):
         else:
             return "Aucune"
 
+    def get_id(self):
+        return self.id
+
+    def get_title(self):
+        try:
+            return self.title
+        except AttributeError:
+            self.title = self._retrieve_data(1)
+            return self.title
+
+    def get_category(self):
+        try:
+            return self.category
+        except AttributeError:
+            self.category = self._category()
+            return self.category
+
+    def get_description(self):
+        try:
+            return self.description
+        except AttributeError:
+            self.description = self._retrieve_data(2)
+            return self.description
+
+    def get_application(self):
+        try:
+            return self.application
+        except AttributeError:
+            self.application = self._retrieve_data(5)
+            return self.application
+
+    def get_bilan_energie(self):
+        try:
+            return self.bilan_energie
+        except AttributeError:
+            self.bilan_energie = self._retrieve_data(6)
+            return self.bilan_energie
+
+    def get_regle_pouce_text(self):
+        try:
+            return self.regle_pouce_text
+        except AttributeError:
+            self.regle_pouce_text = self._retrieve_data(10)
+            return self.regle_pouce_text
+
+    def get_difficultes(self):
+        try:
+            return self.difficultes
+        except AttributeError:
+            self.difficultes = self._retrieve_data(9)
+            return self.difficultes
+
+    def get_gain_text(self):
+        try:
+            return self.gain_text
+        except AttributeError:
+            self.gain_text = self._retrieve_data(11)
+            return self.gain_text
+
+    def get_effets_positifs(self):
+        try:
+            return self.effets_positifs
+        except AttributeError:
+            self.effets_positifs = self._retrieve_data(12)
+            return self.effets_positifs
+
     def __str__(self) -> str:
-        return f"{str(self.category)}\n{self.title} :\n{self.description}\n"
+        return f"{str(self.get_category())}\n{self.get_title()} :\n{self.get_description()}\n"
 
 
 class CaseStudy(DatabaseObject):
@@ -450,6 +450,56 @@ class Reference(DatabaseObject):
         return f"Date : {self.date}\nRegion : {self.region}"
 
 
+class SolutionForInference(DatabaseObject):
+
+    def __init__(self, title, class_name, id) -> None:
+        self.title = title
+        self.class_name = class_name
+        self.id = id
+        self.text = self._get_text()
+        self.cosine_similarity_score = None
+        self.cross_encoded_score = None
+
+    def set_cosine_similarity_score(self, value: float):
+        self.cosine_similarity_score = value
+
+    def get_cosine_similarity_score(self):
+        return self.cosine_similarity_score
+
+    def set_cross_encoded_score(self, value: float):
+        self.cross_encoded_score = value
+
+    def get_cross_encoded_score(self):
+        return self.cross_encoded_score
+
+    def _retrieve_data(self, property: str):
+        DatabaseObject.cursor.execute(
+            f"""SELECT {property} FROM tblsolutionembeddings WHERE codesolution = {self.id}""")
+        data = DatabaseObject.cursor.fetchone()
+        if data:
+            return data[0]
+        else:
+            return "Aucune"
+
+    def get_embedding(self):
+        try:
+            return self.embedding
+        except AttributeError:
+            self.embedding = torch.Tensor([float(x) for x in list(
+                self._retrieve_data("embeddingvector")[1:-1].split(","))])
+            return self.embedding
+
+    def _get_text(self):
+        try:
+            return self.text
+        except AttributeError:
+            self.text = self._retrieve_data("englishtrad")
+            return self.text
+
+    def __str__(self) -> str:
+        return str([self.title, self.class_name])
+
+
 class Secteur(DatabaseObject):
 
     def __init__(self, id) -> None:
@@ -527,3 +577,103 @@ class Secteur(DatabaseObject):
             duplicate_counts, key=duplicate_counts.get, reverse=True)[:3]
 
         return [SolutionDB(id) for id in top_3_ids]
+
+
+class SolutionDBList(DatabaseObject):
+    """Enables efficient querying of the databases for big solutions lists"""
+
+    def __init__(self, solutions: 'list[SolutionDB]') -> None:
+        self.solutions = solutions
+
+    def get_ids(self):
+        return [solution.id for solution in self.solutions]
+
+    def get_titles(self):
+        try:
+            return self.titles
+        except AttributeError:
+            self.titles = self._retrieve_data(1)
+            for solution in self.solutions:
+                for title in self.titles:
+                    if title[1] == str(solution.id):
+                        solution.title = title
+                        break
+
+            return self.titles
+
+    def get_categories(self):
+        try:
+            return self.categories
+        except AttributeError:
+            self.categories = self._categories()
+            return self.categories
+
+    def _categories(self) -> 'list[Category]':
+        categories = []
+        for solution in self.solutions:
+            categories.append(self._category(solution.get_id(), categories))
+        return categories
+
+    def _category(self, solution_id, categories: 'list[Category]'):
+        all_tech_ids = []
+        for category in categories:
+            all_tech_ids.append(category.get_technologies()[-1].get_id())
+
+        self.cursor.execute(
+            f"""SELECT codetechno FROM tblsolution WHERE numsolution = {solution_id}""")
+        techno = self.cursor.fetchone()
+        # If the solution belongs to a category that's already been queried just associate the two
+        for i in range(len(all_tech_ids)):
+            if techno[0] == all_tech_ids[i]:
+                return categories[i]
+        # Else find which category this solution belongs to
+        technos = []
+        if techno:  # If the first category isn't empty, add it to the list of categories the techno belongs to
+            technos.append(techno[0])
+        while techno:  # While the last category has a parent, keep adding it to the list of categories the techno belongs to
+            self.cursor.execute(f"""
+                        SELECT codeparenttechno FROM tbltechno t
+                        JOIN tbldictionnaire d ON numtechno = codeappelobjet
+                        WHERE codelangue = 2 
+                        AND typedictionnaire = 'tec' 
+                        AND indexdictionnaire = 1
+                        AND codeappelobjet ={techno[0]}""")
+            techno = self.cursor.fetchone()
+            if techno:  # Don't add parent if it is null
+                technos.append(techno[0])
+        list_of_technos = [Technology(x) for x in technos][::-1]
+        return Category(list_of_technos)
+
+    def _retrieve_data(self, indexdictionnaire):
+        query = f"""SELECT traductiondictionnaire, codeappelobjet FROM tbldictionnaire WHERE codeappelobjet IN ({', '.join(['%s'] * len(self.solutions))}) AND codelangue = 2 and typedictionnaire = 'sol' and indexdictionnaire = {indexdictionnaire}"""
+        DatabaseObject.cursor.execute(query, self.get_ids())
+        data = DatabaseObject.cursor.fetchmany(len(self.solutions))
+        if data:
+            return [x for x in data]
+        else:
+            return "Aucune"
+
+
+class TechnoList(DatabaseObject):
+
+    def __init__(self, technologies: 'list[Technology]') -> None:
+        self.technologies = technologies
+
+    def get_ids(self):
+        return [techno.id for techno in self.technologies]
+
+    def get_names(self):
+        try:
+            return self.names
+        except AttributeError:
+            self.names = self._retrieve_data(1)
+            return self.names
+
+    def _retrieve_data(self, indexdictionnaire):
+        query = f"""SELECT traductiondictionnaire FROM tbldictionnaire WHERE codeappelobjet IN ({', '.join(['%s'] * len(self.technologies))}) AND codelangue = 2 and typedictionnaire = 'tec' and indexdictionnaire = {indexdictionnaire}"""
+        DatabaseObject.cursor.execute(query, self.get_ids())
+        data = DatabaseObject.cursor.fetchmany(len(self.technologies))
+        if data:
+            return [x[0] for x in data]
+        else:
+            return "Aucune"
