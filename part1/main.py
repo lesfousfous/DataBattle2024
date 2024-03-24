@@ -33,11 +33,11 @@ def process_desciption(string: str):
     sol_time = time.time() - start_time - db_time
     print(f"Time to find the solutions : {sol_time}")
 
-    return (Technology(find_techno_id(class_info[0])))
+    return (Technology(find_techno_id(class_info[0], solutions)))
     # print(f"Total time : {time.time() - start_time} sec")
 
 
-def find_techno_id(class_info):
+def find_techno_id(class_info, solutions):
     """Using the data from the model, find the best techno id so you can give all the solutions in that category to the user"""
     solution = [x for x in solutions.solutions if x.id == class_info[1].id][0]
     category = solution.get_category().get_technologies()[:class_info[0]+1]
