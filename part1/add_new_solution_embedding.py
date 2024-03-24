@@ -63,4 +63,4 @@ def add_solution_embedding(solution_id: int):
     db.database_connection.commit()
 
 
-# fill_embeddings_table_from_scratch()
+fill_embeddings_table_from_scratch()
