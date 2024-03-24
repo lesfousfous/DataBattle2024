@@ -1,9 +1,13 @@
 import streamlit as st
 from main import process_desciption
+
 # Define your Python function that will be executed when the button is clicked
+
+
 def process_input(input_text):
     # Process the input here (e.g., print it)
     return ("Input:", input_text)
+
 
 # Streamlit app layout
 st.title("Search Bar and Button Example")

@@ -33,7 +33,7 @@ def process_desciption(string: str):
     sol_time = time.time() - start_time - db_time
     print(f"Time to find the solutions : {sol_time}")
 
-    return (Technology(find_techno_id(class_info[0], solutions)))
+    return relevant_solutions
     # print(f"Total time : {time.time() - start_time} sec")
 
 

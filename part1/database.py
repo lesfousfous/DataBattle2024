@@ -23,8 +23,12 @@ class Database:
             user=config_file['mysqlDB']['user'],
             password=config_file['mysqlDB']["password"],
             database=config_file['mysqlDB']['db'],
+            ssl_disabled=True,
         )
         return mydb
+
+
+db = Database()
 
 
 class Preprocessor:
@@ -127,7 +131,6 @@ class Preprocessor:
 
 
 class DatabaseObject:
-    db = Database()
     cursor = db.database_connection.cursor()
 
     def clean_up_text(text_extraction_func) -> str:
