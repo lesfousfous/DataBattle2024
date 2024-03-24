@@ -17,7 +17,7 @@ print(f"Time to query the db : {db_time}")
 
 start_time2 = time.time()
 translator = Translator()
-user_query = "Qu'est-ce que la HP flottante ?"
+user_query = "J'ai un problème de chauffage ?"
 # preprocessor = Preprocessor()
 # preprocessed_query = preprocessor(user_query)
 preprocessed_query = translator.translate(user_query, dest="en").text
