@@ -1,35 +1,11 @@
 import streamlit as st
 from utils.database import SolutionDB
 import plotly.graph_objects as go
+import plotly.io as pio
 
 
 solutions = [SolutionDB(id) for id in [160, 170]]
-
-# Initialize session state
-if "show_details" not in st.session_state:
-    st.session_state.show_details = False
-if "current_solution" not in st.session_state:
-    st.session_state.current_solution = {}
-
-
-def show_solution_details(solution: SolutionDB):
-    """Callback function to show solution details."""
-    st.session_state.current_solution = solution
-    st.session_state.show_details = True
-
-
-# Main page layout
-if not st.session_state.show_details:
-    st.title("Solutions")
-    for solution in solutions:
-        link = st.button(solution.get_title())
-        if link:
-            show_solution_details(solution)
-else:
-    solution: SolutionDB
-    solution = st.session_state.current_solution
-    # Custom CSS to style the boxes
-    custom_css = """
+custom_css = """
     <style>
     .title {
       color : #73BE31
@@ -42,9 +18,21 @@ else:
       text-align : center;
       border: 2px solid #4CAF50; /* Green border */ 
     }
-    .main {
+    
+    .block-container {
+      max-width : 100%;
+    }
+    
+    div[data-testid=stMarkdownContainer]{
+      max-width : 100%;
+      display : flex;
+      justify-content : center;
+    }
+    
+    div[data-testid="stButton"] {
       display : flex;
       align-items : center;
+      justify-content : center;
     }
     
     .title-divider {
@@ -126,8 +114,14 @@ else:
     </style>
     """
 
-    st.markdown(custom_css, unsafe_allow_html=True)
-    title = f"Solution {solution.get_id()} : {solution.get_title()}"
+
+def show_solution_details(solution: SolutionDB):
+    """Callback function to show solution details."""
+    st.session_state.current_solution = solution
+    st.session_state.show_details = True
+
+
+def load_solution_data_into_paragraphs(solution: SolutionDB):
     boxes = []
     text_data = [("Application", solution.get_application(), "application"),
                  ("Bilan Energétique", solution.get_bilan_energie(), "bilan-ener")]
@@ -137,11 +131,12 @@ else:
               <h3 class='title box-title'>{name}</h3>
               <p>{text}</p>
             </div>""")
+    return boxes
 
+
+def load_cout_gain_table_into_html(solution: SolutionDB):
     plus = "".join(["+" for x in range(int(solution.get_regle_pouce_gain()))])
     moins = "".join(["-" for x in range(int(solution.get_regle_pouce_cout()))])
-
-    regle_du_pouce = "".join(plus)
 
     difficultes = f"""
     <h5>Difficultés :</h5>
@@ -188,10 +183,74 @@ else:
     </table>
     """
 
-    boxes.append(f"""<div class='big-box'>
+    return f"""<div class='big-box'>
               <h3 class='title box-title'>Synthèse économique</h3>
               <div>{table}</div>
-            </div>""")
+            </div>"""
+
+
+def load_graphs():
+    # Sample data for the Plotly graph
+    x_data = [0, 1, 2, 3, 4]
+    y_data = [x**2 for x in x_data]
+
+    # Create a Plotly graph
+    fig = go.Figure(data=go.Scatter(x=x_data, y=y_data))
+
+    # Convert the Plotly graph to an HTML string
+    graph_html = pio.to_html(fig, full_html=False)
+
+    # Your existing custom HTML structure
+    custom_html_part1 = """
+    <div>
+        <h1>My Custom Title</h1>
+        <p>This is a paragraph in my custom HTML.</p>
+    """
+
+    custom_html_part2 = """
+        <p>This is another paragraph after the graph.</p>
+    </div>
+    """
+
+    # Embed the Plotly graph in your custom HTML
+    full_html = custom_html_part1 + graph_html + custom_html_part2
+    return full_html
+
+
+# Initialize session state
+if "show_details" not in st.session_state:
+    st.session_state.show_details = False
+if "current_solution" not in st.session_state:
+    st.session_state.current_solution = {}
+
+
+# Main page layout
+if not st.session_state.show_details:
+    st.title("Solutions")
+    for solution in solutions:
+        link = st.button(solution.get_title())
+        if link:
+            show_solution_details(solution)
+else:
+    solution: SolutionDB
+    solution = st.session_state.current_solution
+    st.markdown(custom_css, unsafe_allow_html=True)
+    title = f"Solution {solution.get_id()} : {solution.get_title()}"
+
+    boxes = load_solution_data_into_paragraphs(solution)
+    boxes.append(load_cout_gain_table_into_html(solution))
+
+    # Sample data for the Plotly graph
+    x_data = [0, 1, 2, 3, 4]
+    y_data = [x**2 for x in x_data]
+
+    # Create a Plotly graph
+    fig = go.Figure(data=go.Scatter(x=x_data, y=y_data))
+
+    # Convert the Plotly graph to an HTML string
+    graph_html = pio.to_html(fig, full_html=False)
+    boxes.append(graph_html)
+    # boxes.append(graphs)
     st.markdown(
         f"""
         <div class="container-box">
@@ -204,11 +263,6 @@ else:
         </div>
     """, unsafe_allow_html=True
     )
-    # Create a Plotly graph
-    fig = go.Figure(data=go.Bar(y=[2, 3, 1]))
-
-    # Display the Plotly graph in Streamlit
-    st.plotly_chart(fig)
     link = st.button("Back")
     if link:
         st.session_state.show_details = False
