@@ -254,8 +254,8 @@ def gainFinancier(codeSolution: int):
         print("aucune valeur")
         exit(402)
 
-    X = []
-    Y = []
+    X = [0]
+    Y = [0]
     for _rex, cout, gain in res:
         X.append(gain)
         Y.append(cout)
@@ -276,8 +276,8 @@ def gainEnergie(codeSolution: int):
         print("aucune valeur")
         exit(402)
 
-    X = []
-    Y = []
+    X = [0]
+    Y = [0]
     unit = 0
     for gain, cout, unit in res:
         X.append(gain)
