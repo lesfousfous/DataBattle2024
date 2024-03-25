@@ -65,7 +65,7 @@ class QueryDb(DatabaseObject):
                 AND NOT g.codeperiodeenergie IS NULL
                 AND NOT c.reelcoutrex IS NULL
                 AND NOT c.codemonnaiecoutrex IS NULL
-                AND g.codeperiodeenergie > 2
+                AND g.codeperiodeenergie != 2
             """
         )
         return DatabaseObject.cursor.fetchall()
@@ -187,6 +187,7 @@ class Parse(QueryDb):
 
         res = []
         for rex in outputRexFin:
+
             codeMonnaieGain = rex[2] if rex[2] != 1 else rex[5]
             if codeMonnaieGain == 1:
                 continue
@@ -267,28 +268,29 @@ def gainFinancier(codeSolution: int):
     pass
 
 
-
-if __name__ == '__main__':
-    db = QueryDb()
-    #print(db.get_gainfinancier(79))
+def gainEnergie(codeSolution: int):
     parse = Parse()
 
-    data = parse.parse_gain_eco(160)
-    print(data)
-
-    if len(data) == 0:
+    res = parse.parse_gain_eco(codeSolution)
+    if len(res) == 0:
         print("aucune valeur")
         exit(402)
 
     X = []
     Y = []
-    for cout, gain, unit in data:
+    unit = 0
+    for gain, cout, unit in res:
         X.append(gain)
         Y.append(cout)
+        unit = unit
 
     X = np.array(X).reshape(-1,1)
     Y = np.array(Y)  
 
     model = regression_lineaire(X, Y)
-    show_regression(model, X, Y, f"{data[0][2]}/an", "cout €")
+    show_regression(model, X, Y, f"{unit}/an", "cout €") 
     
+
+if __name__ == '__main__':
+    gainFinancier(79)
+    # gainEnergie(79)    
