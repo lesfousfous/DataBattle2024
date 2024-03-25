@@ -8,6 +8,7 @@ from nltk.corpus import wordnet
 import nltk
 from bs4 import BeautifulSoup
 import torch
+import re
 
 
 class Database:
@@ -279,10 +280,18 @@ class SolutionDB(DatabaseObject):
         list_of_technos = [Technology(x) for x in technos][::-1]
         return Category(list_of_technos)
 
-    @DatabaseObject.clean_up_text
     def _retrieve_data(self, indexdictionnaire):
         DatabaseObject.cursor.execute(
             f"""SELECT traductiondictionnaire FROM tbldictionnaire WHERE codeappelobjet = {self.id} AND codelangue = 2 and typedictionnaire = 'sol' and indexdictionnaire = {indexdictionnaire}""")
+        data = DatabaseObject.cursor.fetchone()
+        if data:
+            return data[0]
+        else:
+            return "Aucune"
+
+    def _retrieve_numeric_data(self, property: str):
+        DatabaseObject.cursor.execute(
+            f"""SELECT {property} FROM tblsolution WHERE numsolution = {self.id}""")
         data = DatabaseObject.cursor.fetchone()
         if data:
             return data[0]
@@ -306,6 +315,7 @@ class SolutionDB(DatabaseObject):
             self.category = self._category()
             return self.category
 
+    @DatabaseObject.clean_up_text
     def get_description(self):
         try:
             return self.description
@@ -327,18 +337,34 @@ class SolutionDB(DatabaseObject):
             self.bilan_energie = self._retrieve_data(6)
             return self.bilan_energie
 
-    def get_regle_pouce_text(self):
+    def get_regle_pouce_cout(self):
+        try:
+            return self.regle_pouce_cout
+        except AttributeError:
+            self.regle_pouce_cout = self._retrieve_numeric_data(
+                "jaugecoutsolution")
+            return self.regle_pouce_cout
+
+    def get_regle_pouce_gain(self):
+        try:
+            return self.regle_pouce_gain
+        except AttributeError:
+            self.regle_pouce_gain = self._retrieve_numeric_data(
+                "jaugecoutsolution")
+            return self.regle_pouce_gain
+
+    def get_cout_text(self):
         try:
             return self.regle_pouce_text
         except AttributeError:
-            self.regle_pouce_text = self._retrieve_data(10)
+            self.regle_pouce_text = self._retrieve_data(9)
             return self.regle_pouce_text
 
     def get_difficultes(self):
         try:
             return self.difficultes
         except AttributeError:
-            self.difficultes = self._retrieve_data(9)
+            self.difficultes = self._retrieve_data(10)
             return self.difficultes
 
     def get_gain_text(self):

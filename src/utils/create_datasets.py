@@ -1,4 +1,4 @@
-from database import Database, SolutionsAndCategoriesData, read_gpt_to_file
+from DataBattle2024.src.utils.database import Database, SolutionsAndCategoriesData, read_gpt_to_file
 
 
 prep_solutions_for_gpt = False

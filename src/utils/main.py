@@ -1,5 +1,5 @@
-from findrelevantinfo import BestSolutionsFinder, change_solutions_format
-from database import SolutionDB, Technology, Database, SolutionDBList, Preprocessor
+from DataBattle2024.src.utils.findrelevantinfo import BestSolutionsFinder, change_solutions_format
+from DataBattle2024.src.utils.database import SolutionDB, Technology, Database, SolutionDBList, Preprocessor
 from googletrans import Translator
 import time
 
