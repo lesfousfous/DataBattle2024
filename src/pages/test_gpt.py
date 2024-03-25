@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from utils.database import SolutionDB
 import plotly.graph_objects as go
+import numpy as np
 
 
 def load_cout_gain_table_into_html(solution: SolutionDB):
@@ -57,6 +58,38 @@ def load_cout_gain_table_into_html(solution: SolutionDB):
               <h3 class='title box-title'>Synthèse économique</h3>
               <div>{table}</div>
             </div>"""
+
+
+def plot_graph(category, entries):
+    for entry in entries:
+        category_name = category
+        if category == "gainenergie":
+            category_name = "Gain Energétique"
+        elif category == "gainfinancier":
+            category_name = "Gain Financier"
+        coeff_reg = entry["coeff_reg"]
+        unite_energie = entry["unite_energie"]
+        cost = entry["cost"]
+        gain = entry["gain"]
+        scatter = go.Scatter(x=cost, y=gain,
+                             mode='markers',  # Only markers for data points
+                             name='Data Points',
+                             marker=dict(color='RoyalBlue', size=12))
+
+        fig = go.Figure(data=scatter)
+
+        x = np.linspace(0, 100000, 25)
+        # Adding Cost Line
+        fig.add_trace(go.Scatter(x=x, y=coeff_reg*x,
+                                 mode='lines+markers',
+                                 name=f'Gain'))
+
+        # Updating layout for each figure
+        fig.update_layout(title=f'{category_name}',
+                          xaxis_title='Cost',
+                          yaxis_title=f'Energy in {unite_energie}',
+                          legend_title='Legend')
+        st.plotly_chart(fig)
 
 
 custom_css = """
@@ -153,6 +186,38 @@ custom_css = """
     """
 
 solutions = [SolutionDB(id) for id in [160, 170]]
+graph_data = {
+    "gainenergie": [
+        {
+            "coeff_reg": 3.7,
+            "unite_energie": "kWh",
+            "cost": [13000, 43000],
+            "gain": [67000, 78000]
+        },
+        {
+            "coeff_reg": 1.4,
+            "unite_energie": "litres",
+            "cost": [13000, 43000],
+            "gain": [67000, 78000]
+        }
+    ],
+    # "gainGES": [
+    #     {
+    #         "coeff_reg": 3.7,
+    #         "unite_energie": "C02eq",
+    #         "cost": [13000, 43000],
+    #         "gain": [67000, 78000]
+    #     },
+    #     {
+    #         "coeff_reg": 1.4,
+    #         "unite_energie": "litres",
+    #         "cost": [13000, 43000],
+    #         "gain": [67000, 78000]
+    #     }
+    # ]
+}
+
+
 st.title("Solutions Overview")
 
 for solution in solutions:
@@ -178,34 +243,15 @@ if 'current_solution' in st.session_state:
               <p>{solution.get_bilan_energie()}</p>
             </div>""", unsafe_allow_html=True)
 
-    # Plotly Graph Example
-    fig = go.Figure(
-        data=[go.Bar(x=["A", "B", "C"], y=[1, 3, 2], marker_color='lightsalmon')])
-    st.plotly_chart(fig, use_container_width=True)
-
     st.markdown(load_cout_gain_table_into_html(
         solution), unsafe_allow_html=True)
 
+    # Plotly Graph Example
+    for category, entries in graph_data.items():
+        plot_graph(category, entries)
+
     if st.button("Back to Solutions List"):
         del st.session_state['current_solution']
-        st.experimental_rerun()
-
-st.markdown(
-    """
-    <style>
-    /* Add your CSS styling here */
-    .stButton>button {
-        width: 100%;
-        margin: 2px 0;
-        padding: 10px;
-    }
-    
-    .stDataFrame {
-    font-size: 16px;  /* Adjust the font size of table */
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+        st.rerun()
 
 # Use this style block to customize the appearance of your Streamlit widgets and layout
