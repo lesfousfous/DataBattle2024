@@ -1,5 +1,5 @@
 import streamlit as st
-from ..utils import database
+from utils.database import SolutionDB
 import plotly.graph_objects as go
 
 

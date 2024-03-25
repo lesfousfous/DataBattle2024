@@ -5,7 +5,7 @@ import numpy as np
 import time
 from collections import Counter
 from sentence_transformers import CrossEncoder
-from database import SolutionDBList, SolutionForInference
+from utils.database import SolutionDBList, SolutionForInference
 
 
 class EmbeddingsModel:

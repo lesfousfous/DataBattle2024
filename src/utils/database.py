@@ -8,7 +8,6 @@ from nltk.corpus import wordnet
 import nltk
 from bs4 import BeautifulSoup
 import torch
-import re
 
 
 class Database:

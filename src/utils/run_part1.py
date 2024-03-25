@@ -1,10 +1,10 @@
-from DataBattle2024.src.utils.findrelevantinfo import BestSolutionsFinder, change_solutions_format
-from DataBattle2024.src.utils.database import SolutionDB, Technology, Database, SolutionDBList, Preprocessor
+from utils.findrelevantinfo import BestSolutionsFinder, change_solutions_format
+from utils.database import SolutionDB, Technology, Database, SolutionDBList
 from googletrans import Translator
 import time
 
 
-def process_desciption(string: str):
+def process_description(string: str):
     db = Database()
     cursor = db.database_connection.cursor()
     cursor.execute(

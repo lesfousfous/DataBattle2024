@@ -1,5 +1,5 @@
 import streamlit as st
-from main import process_desciption
+from utils.run_part1 import process_description
 from streamlit_main_page import load_css
 
 load_css()
@@ -14,7 +14,7 @@ if "output" not in session_state:
 
 
 if st.button("Process"):
-    (techno, relevant_solutions) = process_desciption(search_input)
+    (techno, relevant_solutions) = process_description(search_input)
     session_state.output = techno
 
 if session_state.output is not None:
