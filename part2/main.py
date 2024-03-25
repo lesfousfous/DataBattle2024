@@ -70,6 +70,25 @@ class QueryDb(DatabaseObject):
         )
         return DatabaseObject.cursor.fetchall()
     
+    def get_gain_gaz_serre(self, codeSolution: int):
+        # gesgainrex |  reelgainrex | codemonnaiecoutrex
+        DatabaseObject.cursor.execute(
+            f"""
+            SELECT gesgainrex, reelcoutrex, codemonnaiecoutrex
+            FROM tblgainrex as g
+            join tblcoutrex as c 
+                on  c.coderex = g.coderex
+                and c.codesolution = g.codesolution 
+            
+            WHERE g.codesolution = {codeSolution}
+                and not gesgainrex is null
+                and not c.reelcoutrex is null
+                and c.codemonnaiecoutrex != 1
+                and not c.codemonnaiecoutrex is null
+            """
+        )
+        return DatabaseObject.cursor.fetchall()
+    
 
 
 
@@ -222,6 +241,20 @@ class Parse(QueryDb):
 
         return res
 
+    def parse_gain_gaz_serre(self, codeSolution:int):
+        # (gesgainrex | reelgainrex | codemonnaiecoutrex)
+        outputRexGaz = self.get_gain_gaz_serre(codeSolution)
+
+        res = []
+        unit = "tCO2e"
+        for rex in outputRexGaz:
+            codeMonnaieGain = rex[2] 
+            gainEuro = Convert.to_euro(float(rex[1]), codeMonnaieGain)
+
+            res.append((float(rex[0]), gainEuro, unit))
+
+        return res
+
     
 def regression_lineaire(X: np.array, Y:np.array):
     
@@ -278,7 +311,7 @@ def gainEnergie(codeSolution: int):
 
     X = [0]
     Y = [0]
-    unit = 0
+    unit = ""
     for gain, cout, unit in res:
         X.append(gain)
         Y.append(cout)
@@ -290,7 +323,29 @@ def gainEnergie(codeSolution: int):
     model = regression_lineaire(X, Y)
     show_regression(model, X, Y, f"{unit}/an", "cout €") 
     
+def gainGazSerre(codeSolution: int):
+    parse = Parse()
+
+    res = parse.parse_gain_gaz_serre(codeSolution)
+    if len(res) == 0:
+        print("aucune valeur")
+        exit(402)
+
+    X = [0]
+    Y = [0]
+    unit = ""
+    for gain, cout, unit in res:
+        X.append(gain)
+        Y.append(cout)
+        unit = unit
+
+    X = np.array(X).reshape(-1,1)
+    Y = np.array(Y)  
+
+    model = regression_lineaire(X, Y)
+    show_regression(model, X, Y, f"{unit}/an", "cout €")
 
 if __name__ == '__main__':
-    gainFinancier(79)
-    # gainEnergie(79)    
+    # gainFinancier(79)
+    # gainEnergie(79)
+    gainGazSerre(80)    
