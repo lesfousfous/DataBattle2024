@@ -3,8 +3,7 @@ import mysql.connector
 from mysql.connector import MySQLConnection
 from configparser import ConfigParser
 import numpy as np
-from sklearn.linear_model import LinearRegression 
-
+from sklearn.linear_model import LinearRegression
 
 class Database:
 
@@ -40,11 +39,13 @@ class QueryDb(DatabaseObject):
             where   g.codesolution = {codeSolution}
                     and not gainfinanciergainrex is null
                     and not c.reelcoutrex is null
+                    and c.reelcoutrex > 0.0
                     and codeperiodeeconomie > 2
+                    and c.codeunitecoutrex = 1
             """
         )
         return DatabaseObject.cursor.fetchall()
-
+    
 
     def get_gainenergie(self, codeSolution: int):
         # energiegainrex | reelcoutrex | uniteenergiegainrex | codeperiodeenergie | codemonnaiecoutrex
@@ -66,6 +67,7 @@ class QueryDb(DatabaseObject):
                 AND NOT c.reelcoutrex IS NULL
                 AND NOT c.codemonnaiecoutrex IS NULL
                 AND g.codeperiodeenergie != 2
+                and c.codeunitecoutrex = 1
             """
         )
         return DatabaseObject.cursor.fetchall()
@@ -263,6 +265,7 @@ def regression_lineaire(X: np.array, Y:np.array):
     
     return model
 
+@staticmethod
 def show_regression(model, X, Y, xlabel: str, ylabel: str):
     # Prédire les valeurs y pour les données d'entraînement
     y_pred = model.predict(X)
@@ -285,21 +288,29 @@ def gainFinancier(codeSolution: int):
     res = parse.parse_gain_financer(codeSolution)
     if len(res) == 0:
         print("aucune valeur")
-        exit(402)
+        return None
 
     X = [0]
     Y = [0]
+    output = {}
     for _rex, cout, gain in res:
-        X.append(gain)
-        Y.append(cout)
+        X.append(cout)
+        Y.append(gain)
 
+    output['cost'] = X
+    output['gain'] = Y
     X = np.array(X).reshape(-1,1)
     Y = np.array(Y)    
 
     model = regression_lineaire(X, Y)
-    show_regression(model, X, Y, "gain €/an", "cout €") 
-    pass
+    
+    output['a'] = model.coef_[0]
+    output['b'] = model.intercept_
+    output['unit_cost'] = '€'
+    output['unit_gain'] = '€/an'
+    # show_regression(model, X, Y, "cout €", , "gain €/an")
 
+    return output
 
 def gainEnergie(codeSolution: int):
     parse = Parse()
@@ -307,45 +318,81 @@ def gainEnergie(codeSolution: int):
     res = parse.parse_gain_eco(codeSolution)
     if len(res) == 0:
         print("aucune valeur")
-        exit(402)
+        return None
 
-    X = [0]
-    Y = [0]
-    unit = ""
-    for gain, cout, unit in res:
-        X.append(gain)
-        Y.append(cout)
-        unit = unit
+    output = []
+    data_split = {}
+    for cout, gain, unit in res:
+        if unit not in data_split:
+            data_split[unit] = {'X': [0], 'Y': [0], 'model': None}
+        
+        data_split[unit]['X'].append(cout)
+        data_split[unit]['Y'].append(gain)
 
-    X = np.array(X).reshape(-1,1)
-    Y = np.array(Y)  
+    for unit in data_split:
+        
+        X = np.array(data_split[unit]['X']).reshape(-1,1)
+        Y = np.array(data_split[unit]['Y'])
 
-    model = regression_lineaire(X, Y)
-    show_regression(model, X, Y, f"{unit}/an", "cout €") 
+        model = regression_lineaire(X, Y)
+        
+        tmp = {}
+        tmp['a'] = model.coef_[0]
+        tmp['b'] = model.intercept_
+        tmp['cost'] = data_split[unit]['X']
+        tmp['gain'] = data_split[unit]['Y']
+        tmp['unit_cost'] = '€'
+        tmp['unit_gain'] = unit + '/an'
+        output.append(tmp)
+        # show_regression(data_split[unit]['model'], X, Y, f"{unit}/an", "cout €")
     
+    return output
+
+
 def gainGazSerre(codeSolution: int):
     parse = Parse()
 
     res = parse.parse_gain_gaz_serre(codeSolution)
     if len(res) == 0:
         print("aucune valeur")
-        exit(402)
+        return None
+
 
     X = [0]
     Y = [0]
     unit = ""
+    output = {}
     for gain, cout, unit in res:
-        X.append(gain)
-        Y.append(cout)
+        X.append(cout)
+        Y.append(gain)
         unit = unit
 
+    output['cost'] = X
+    output['gain'] = Y
     X = np.array(X).reshape(-1,1)
     Y = np.array(Y)  
 
     model = regression_lineaire(X, Y)
-    show_regression(model, X, Y, f"{unit}/an", "cout €")
+    output['a'] = model.coef_[0]
+    output['b'] = model.intercept_
+    output['unit_cost'] = '€'
+    output['unit_gain'] = 'tCO2e/an'
+    # show_regression(model, X, Y, "cout €", f"{unit}/an")
+
+    return output
+
+
+def predict(codeSolution: int):
+    res = {}
+    res['financial'] = gainFinancier(codeSolution)
+    res['energy'] = gainEnergie(codeSolution)
+    res['greenhouse'] = gainGazSerre(codeSolution)
+
+    return res
 
 if __name__ == '__main__':
-    # gainFinancier(79)
+    # gainFinancier(312)
+    # gainEnergie(240)
     # gainEnergie(79)
-    gainGazSerre(80)    
+    # gainGazSerre(80)
+    print((predict(160)))
