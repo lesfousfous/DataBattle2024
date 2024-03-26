@@ -2,6 +2,7 @@ import streamlit as st
 from utils.run_part1 import process_description
 from utils.database import SolutionDB
 from utils.design import load_all_page_requirements, show_solution
+from streamlit.errors import DuplicateWidgetID
 
 
 def cut_text(text, length):
@@ -20,9 +21,15 @@ def display_solution(solution: SolutionDB):
                   <p>{cut_text(solution.get_description(), 150)}
                 </div>
     """, unsafe_allow_html=True)
-    if st.button("Accèder à la solution", key=f"btn_{solution.get_id()}"):
-        st.session_state['selected_solution_id'] = solution.get_id()
-        st.rerun()
+    try:
+        if st.button("Accèder à la solution", key=f"button_{solution.get_id()}"):
+            st.session_state['selected_solution_id'] = solution.get_id()
+            st.rerun()
+
+    except DuplicateWidgetID:
+        if st.button("Accèder à la solution", key=f"button_{(solution.get_id() + 1)*10000}"):
+            st.session_state['selected_solution_id'] = solution.get_id()
+            st.rerun()
 
 
 # Function to display results
@@ -55,9 +62,9 @@ def display_results(category, relevant_solutions):
 
 def show_query_page():
 
-    st.title("Make a query")
+    st.title("Entrez votre demande")
 
-    search_input = st.text_input("Enter your search query:")
+    search_input = st.text_input("Entrez votre demande :")
 
     # Initialize session state variables if they don't exist
     if 'processing' not in st.session_state:
@@ -70,7 +77,7 @@ def show_query_page():
     if 'nb' not in st.session_state:
         st.session_state.nb = 0
     # Button to initiate processing
-    if st.button("Process", disabled=st.session_state.processing) or st.session_state.processing:
+    if st.button("Chercher", disabled=st.session_state.processing) or st.session_state.processing:
         st.session_state.nb += 1
         # print(st.session_state.nb)
         # print(f"Processing : {st.session_state.processing}\nLast Results : {st.session_state.last_results}\nDisabled : {st.session_state.button_disabled}")
@@ -101,4 +108,34 @@ if 'selected_solution_id' in st.session_state:
         del st.session_state.selected_solution_id
         st.rerun()
 else:
+    st.session_state.graph_data = graph_data = {
+        "gainenergie": [
+            {
+                "coeff_reg": 3.7,
+                "unite_energie": "kWh",
+                "cost": [13000, 43000],
+                "gain": [67000, 78000]
+            },
+            {
+                "coeff_reg": 1.4,
+                "unite_energie": "litres",
+                "cost": [13000, 43000],
+                "gain": [67000, 78000]
+            }
+        ],
+        # "gainGES": [
+        #     {
+        #         "coeff_reg": 3.7,
+        #         "unite_energie": "C02eq",
+        #         "cost": [13000, 43000],
+        #         "gain": [67000, 78000]
+        #     },
+        #     {
+        #         "coeff_reg": 1.4,
+        #         "unite_energie": "litres",
+        #         "cost": [13000, 43000],
+        #         "gain": [67000, 78000]
+        #     }
+        # ]
+    }
     show_query_page()
