@@ -18,6 +18,7 @@ class Database:
         self.database_connection = Database._init_database_connection(config)
 
     def _init_database_connection(config_file: ConfigParser) -> MySQLConnection:
+        print("COnnection")
         mydb = mysql.connector.connect(
             host=config_file['mysqlDB']['host'],
             user=config_file['mysqlDB']['user'],
@@ -131,7 +132,7 @@ class Preprocessor:
 
 
 class DatabaseObject:
-    cursor = db.database_connection.cursor()
+    cursor = db.database_connection.cursor(buffered=True)
 
     def clean_up_text(text_extraction_func) -> str:
         """A decorator I can just add to clean up the text that comes out of the database
@@ -310,7 +311,7 @@ class SolutionDB(DatabaseObject):
         DatabaseObject.cursor.execute(
             f"""SELECT {property} FROM tblsolution WHERE numsolution = {self.id}""")
         data = DatabaseObject.cursor.fetchone()
-        if data:
+        if data[0]:
             return data[0]
         else:
             return "Aucune"

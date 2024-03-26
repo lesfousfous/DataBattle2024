@@ -30,8 +30,10 @@ def process_description(string: str):
     relevant_solutions = [SolutionDB(id) for id in relevant_solutions_ids]
     sol_time = time.time() - start_time - db_time
     print(f"Time to find the solutions : {sol_time}")
-
-    return (find_category(class_info[0], solutions), relevant_solutions)
+    if not class_info:
+        return None, relevant_solutions
+    else:
+        return (find_category(class_info[0], solutions), relevant_solutions)
     # print(f"Total time : {time.time() - start_time} sec")
 
 
