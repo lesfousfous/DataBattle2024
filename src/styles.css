@@ -64,7 +64,7 @@
 }
 
 /* Style the dropdown links */
-.dropdown-content a {
+.dropdown-content button {
   background-color: #333; /* Dark background color */
   float: none; /* Remove floating */
   color: rgb(255, 255, 255); /* Text color */
@@ -76,7 +76,7 @@
 }
 
 /* Change background color of dropdown links on hover */
-.dropdown-content a:hover {
+.dropdown-content button:hover {
   background-color: #ddd; /* Light background color */
 }
 
@@ -91,4 +91,47 @@
   background-color: #5a5c63;
   border-radius: 15px; /* Rounded corners */
   padding: 10px;
+  display: block; /* Show dropdown content */
+}
+
+/* Style the dropdown button */
+.option {
+  background-color: #333; /* Dark background color */
+  color: white; /* Text color */
+  padding: 14px 16px; /* Add padding for better spacing */
+  border: none; /* Remove border */
+  cursor: pointer; /* Add cursor pointer on hover */
+}
+
+/* Style the submenu */
+.submenu {
+  display: none; /* Hide submenu by default */
+  position: absolute; /* Position submenu absolutely */
+  background-color: #f9f9f9; /* Background color */
+  min-width: 160px; /* Set minimum width */
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2); /* Add shadow */
+  z-index: 1; /* Set z-index to display above other elements */
+  top: 0; /* Align submenu to the top */
+  left: 100%; /* Align submenu to the right of the parent dropdown */
+}
+
+/* Style the dropdown links */
+.submenu a {
+  background-color: #333; /* Dark background color */
+  float: none; /* Remove floating */
+  color: rgb(255, 255, 255); /* Text color */
+  padding: 12px 16px; /* Add padding for better spacing */
+  text-decoration: none; /* Remove underline */
+  display: block; /* Display as block element */
+  text-align: left; /* Left align text */
+  width: 100%;
+}
+
+/* Change background color of dropdown links on hover */
+.submenu a:hover {
+  background-color: #ddd; /* Light background color */
+}
+
+.dropdown-content button:hover .submenu {
+  display: block; /* Show corresponding submenu */
 }

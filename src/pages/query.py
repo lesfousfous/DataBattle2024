@@ -4,6 +4,11 @@ from utils.database import SolutionDB, Category
 import random
 # from streamlit_main_page import load_css
 
+from utils.design import load_css, nav_bar
+
+load_css()
+nav_bar()
+
 
 def load_css():
     try:
