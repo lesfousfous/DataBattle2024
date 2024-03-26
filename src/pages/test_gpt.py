@@ -186,6 +186,7 @@ custom_css = """
     """
 
 solutions = [SolutionDB(id) for id in [160, 170]]
+
 graph_data = {
     "gainenergie": [
         {
@@ -223,12 +224,12 @@ st.title("Solutions Overview")
 for solution in solutions:
     if st.button(solution.get_title()):
         st.session_state['current_solution'] = solution
-        st.experimental_rerun()
+        st.rerun()
 if 'current_solution' in st.session_state:
     solution: SolutionDB
     solution = st.session_state['current_solution']
     st.markdown(custom_css, unsafe_allow_html=True)
-
+    print(solution)
     title = f"Solution {solution.get_id()} : {solution.get_title()}"
     st.markdown(f"<h1 class='title'>{title}</h1>", unsafe_allow_html=True)
     st.markdown("<hr class='title-divider'>", unsafe_allow_html=True)
