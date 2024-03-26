@@ -1,8 +1,9 @@
 import streamlit as st
 from utils.run_part1 import process_description
-from streamlit_main_page import load_css
+from utils.design import load_css, nav_bar
 
 load_css()
+nav_bar()
 
 st.title("Make a query")
 
