@@ -22,12 +22,14 @@ def nav_bar():
     for solution in solutions:
         
             first_category = solution.get_category().get_technologies()
+            count = 0
             if len(first_category) > 1:
                  
                 (first_category_name, first_category_id) = (first_category[1].get_name(), first_category[1].get_id())
                 if not first_category_id in categories:
+                    count += 1
                     categories.add(first_category_id)
-                    options_str += '<a href="#">' + first_category_name + '</a>'
+                    options_str += '<button class="option" id="' + str(count) + '">' + first_category_name + '</button>'
             
             
         
@@ -37,10 +39,20 @@ def nav_bar():
         <div class="dropdown">
             <button class="dropbtn">Home</button>
             <div class="dropdown-content">
-                """ + options_str + """"
+                """ + options_str + """
             </div>
         </div>
         <a href="#">About</a>
         <a href="#">Services</a>
         <a href="#" class="navbar-right">Login</a>
-    </div>""", unsafe_allow_html=True)
+    </div>
+    <div class="submenu" id="1">
+        <a href="#">Subcategory 1 Option 1</a>
+        <a href="#">Subcategory 1 Option 2</a>
+        <a href="#">Subcategory 1 Option 3</a>
+    </div><div class="submenu" id="1">
+        <a href="#">Subcategory 1 Option 1</a>
+        <a href="#">Subcategory 1 Option 2</a>
+        <a href="#">Subcategory 1 Option 3</a>
+    </div>
+    """, unsafe_allow_html=True)
