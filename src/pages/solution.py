@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.design import load_css, nav_bar, show_solution
+from utils.design import load_all_page_requirements show_solution
 import random
 
 
@@ -34,17 +34,16 @@ graph_data = {
     # ]
 }
 
-load_css()
-nav_bar(st.session_state["solutions"])
+load_all_page_requirements()
+
 if 'selected_solutions' not in st.session_state:
     st.session_state['selected_solutions'] = random.sample(
         st.session_state["solutions"], 5)
 
-if 'current_solution' not in st.session_state:
+if 'selected_solution_id' not in st.session_state:
     st.title("Solutions Overview")
     solutions = st.session_state["selected_solutions"]
     for solution in solutions:
-
         if st.button(solution.get_title()):
             print("Hello")
             st.session_state['current_solution'] = solution
@@ -53,3 +52,7 @@ if "graph_data" not in st.session_state:
     st.session_state.graph_data = graph_data
 
 show_solution()
+
+if st.button("Back to Solutions List"):
+    del st.session_state['current_solution']
+    st.rerun()

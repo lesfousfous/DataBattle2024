@@ -164,6 +164,8 @@
   background-color: #394045; /* Light grey background */
   padding: 0 1rem 10rem;
   margin-top : 3rem;
+  display : flex;
+  align-items: center;
   width : 95%;
 }
 

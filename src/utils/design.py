@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
-from utils.database import SolutionDB
+from utils.database import SolutionDB, DatabaseObject
+import numpy as np
 
 
 def load_css():
@@ -12,9 +13,10 @@ def load_css():
         print("error")
 
 
-def nav_bar(solutions: 'list[SolutionDB]'):
+def nav_bar():
     options_str = ""
     categories = set([])
+    solutions = st.session_state.solutions
     for solution in solutions:
 
         first_category = solution.get_category().get_technologies()
@@ -52,10 +54,22 @@ def nav_bar(solutions: 'list[SolutionDB]'):
     """, unsafe_allow_html=True)
 
 
+def load_all_page_requirements():
+    if "solutions" not in st.session_state:
+        DatabaseObject.cursor.execute(
+            f"""SELECT numsolution FROM tblsolution""")
+        solution_ids = [x[0] for x in DatabaseObject.cursor.fetchall()]
+        solutions = [SolutionDB(id) for id in solution_ids]
+        st.session_state["solutions"] = solutions
+    load_css()
+    nav_bar()
+
+
 def show_solution():
-    if 'current_solution' in st.session_state:
+    if 'selected_solution_id' in st.session_state:
         solution: SolutionDB
-        solution = st.session_state['current_solution']
+        solution = [solution for solution in st.session_state.solutions if solution.get_id(
+        ) == st.session_state.selected_solution_id][0]
         graph_data = st.session_state["graph_data"]
         title = f"Solution {solution.get_id()} : {solution.get_title()}"
         st.markdown(f"<h1 class='title'>{title}</h1>", unsafe_allow_html=True)
@@ -77,10 +91,6 @@ def show_solution():
         # Plotly Graph Example
         for category, entries in graph_data.items():
             plot_graph(category, entries)
-
-        if st.button("Back to Solutions List"):
-            del st.session_state['current_solution']
-            st.rerun()
 
 
 def load_cout_gain_table_into_html(solution: SolutionDB):
