@@ -55,6 +55,10 @@ def nav_bar():
 
 
 def load_all_page_requirements():
+    if "set_page_config" not in st.session_state:
+        st.set_page_config(layout="wide")
+        st.session_state.set_page_config = True
+
     if "solutions" not in st.session_state:
         DatabaseObject.cursor.execute(
             f"""SELECT numsolution FROM tblsolution""")
