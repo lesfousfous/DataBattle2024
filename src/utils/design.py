@@ -267,4 +267,4 @@ def plot_graph(graph_data: dict):
                               yaxis_title=f'Energy in {energy_data["unit_gain"]}',
                               legend_title='Legend')
 
-            st.plotly_chart(fig, use_container_width=True)  # Center the plot
+            st.plotly_chart(fig)  # Center the plot
