@@ -18,7 +18,6 @@ class Database:
         self.database_connection = Database._init_database_connection(config)
 
     def _init_database_connection(config_file: ConfigParser) -> MySQLConnection:
-        print("COnnection")
         mydb = mysql.connector.connect(
             host=config_file['mysqlDB']['host'],
             user=config_file['mysqlDB']['user'],

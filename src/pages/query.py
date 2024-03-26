@@ -108,34 +108,5 @@ if 'selected_solution_id' in st.session_state:
         del st.session_state.selected_solution_id
         st.rerun()
 else:
-    st.session_state.graph_data = graph_data = {
-        "gainenergie": [
-            {
-                "coeff_reg": 3.7,
-                "unite_energie": "kWh",
-                "cost": [13000, 43000],
-                "gain": [67000, 78000]
-            },
-            {
-                "coeff_reg": 1.4,
-                "unite_energie": "litres",
-                "cost": [13000, 43000],
-                "gain": [67000, 78000]
-            }
-        ],
-        # "gainGES": [
-        #     {
-        #         "coeff_reg": 3.7,
-        #         "unite_energie": "C02eq",
-        #         "cost": [13000, 43000],
-        #         "gain": [67000, 78000]
-        #     },
-        #     {
-        #         "coeff_reg": 1.4,
-        #         "unite_energie": "litres",
-        #         "cost": [13000, 43000],
-        #         "gain": [67000, 78000]
-        #     }
-        # ]
-    }
+
     show_query_page()

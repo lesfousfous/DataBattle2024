@@ -2,6 +2,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from utils.database import SolutionDB, DatabaseObject
 import numpy as np
+from utils.regression import predict
 
 
 def load_css():
@@ -70,31 +71,29 @@ def load_all_page_requirements():
 
 
 def show_solution():
-    if 'selected_solution_id' in st.session_state:
-        solution: SolutionDB
-        solution = [solution for solution in st.session_state.solutions if solution.get_id(
-        ) == st.session_state.selected_solution_id][0]
-        graph_data = st.session_state["graph_data"]
-        title = f"Solution {solution.get_id()} : {solution.get_title()}"
-        st.markdown(f"<h1 class='title'>{title}</h1>", unsafe_allow_html=True)
-        st.markdown("<hr class='title-divider'>", unsafe_allow_html=True)
-        st.markdown(solution.get_description(), unsafe_allow_html=True)
-        st.markdown(f"""<div class='big-box application'>
-                <h3 class='title box-title'>Application</h3>
-                <p>{solution.get_application()}</p>
-              </div>""", unsafe_allow_html=True)
+    solution: SolutionDB
+    solution = [solution for solution in st.session_state.solutions if solution.get_id(
+    ) == st.session_state.selected_solution_id][0]
+    graph_data = predict(solution.id)
+    title = f"Solution {solution.get_id()} : {solution.get_title()}"
+    st.markdown(f"<h1 class='title'>{title}</h1>", unsafe_allow_html=True)
+    st.markdown("<hr class='title-divider'>", unsafe_allow_html=True)
+    st.markdown(solution.get_description(), unsafe_allow_html=True)
+    st.markdown(f"""<div class='big-box application'>
+            <h3 class='title box-title'>Application</h3>
+            <p>{solution.get_application()}</p>
+          </div>""", unsafe_allow_html=True)
 
-        st.markdown(f"""<div class='big-box bilan-ener'>
-                <h3 class='title box-title'>Bilan Energétique</h3>
-                <p>{solution.get_bilan_energie()}</p>
-              </div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class='big-box bilan-ener'>
+            <h3 class='title box-title'>Bilan Energétique</h3>
+            <p>{solution.get_bilan_energie()}</p>
+          </div>""", unsafe_allow_html=True)
 
-        st.markdown(load_cout_gain_table_into_html(
-            solution), unsafe_allow_html=True)
+    st.markdown(load_cout_gain_table_into_html(
+        solution), unsafe_allow_html=True)
 
-        # Plotly Graph Example
-        for category, entries in graph_data.items():
-            plot_graph(category, entries)
+    # Plotly Graph Example
+    plot_graph(graph_data)
 
 
 def load_cout_gain_table_into_html(solution: SolutionDB):
@@ -158,33 +157,114 @@ def load_cout_gain_table_into_html(solution: SolutionDB):
             </div>"""
 
 
-def plot_graph(category, entries):
-    for entry in entries:
-        category_name = category
-        if category == "gainenergie":
-            category_name = "Gain Energétique"
-        elif category == "gainfinancier":
-            category_name = "Gain Financier"
-        coeff_reg = entry["coeff_reg"]
-        unite_energie = entry["unite_energie"]
-        cost = entry["cost"]
-        gain = entry["gain"]
-        scatter = go.Scatter(x=cost, y=gain,
-                             mode='markers',  # Only markers for data points
-                             name='Data Points',
-                             marker=dict(color='RoyalBlue', size=12))
+# def plot_graph(graph_data: dict):
+#     for key, value in graph_data.items():
+#         isEnergy = False
+#         if value is None:  # Don't plot the graph if no data is available
+#             continue
+#         category_name = key
+#         if category_name == "energy":
+#             category_name = "Gain Energétique"
+#             color = '#4CAF50'
+#             isEnergy = True
+#         elif category_name == "financial":
+#             category_name = "Gain Financier"
+#             color = 'RoyalBlue'
+#         elif category_name == "greenhouse":
+#             category_name = "Réduction des émissions"
+#             color = "#a83832"
+#         if not isEnergy:
+#             pente, ordonnee = value["a"], value["b"]
+#             unite_gain, unite_cout = value["unit_gain"], value["unit_cost"]
+#             cost_values = value["cost"]
+#             gain_values = value["gain"]
 
-        fig = go.Figure(data=scatter)
+#             scatter = go.Scatter(x=cost_values, y=gain_values,
+#                                  mode='markers',  # Only markers for data points
+#                                  name='Data Points',
+#                                  marker=dict(color=color, size=12))
 
-        x = np.linspace(0, 100000, 25)
-        # Adding Cost Line
-        fig.add_trace(go.Scatter(x=x, y=coeff_reg*x,
-                                 mode='lines+markers',
-                                 name=f'Gain'))
+#             fig = go.Figure(data=scatter)
 
-        # Updating layout for each figure
-        fig.update_layout(title=f'{category_name}',
-                          xaxis_title='Cost',
-                          yaxis_title=f'Energy in {unite_energie}',
-                          legend_title='Legend')
-        st.plotly_chart(fig)
+#             x = np.linspace(0, max(cost_values)*1.25, 25)
+#             # Adding Cost Line
+#             fig.add_trace(go.Scatter(x=x, y=pente*x + ordonnee,
+#                                      mode='lines+markers',
+#                                      name=f'Gain',
+
+#                                      line=dict(color=color)))
+
+#             # Updating layout for each figure
+#             fig.update_layout(title=f'{category_name} en {unite_gain}',
+#                               xaxis_title=f'Coût en {unite_cout}',
+#                               yaxis_title=f'Gain en {unite_gain}',
+#                               legend_title='Légende')
+#             st.plotly_chart(fig)
+#         else:
+#             cols = st.columns(len(value))
+#             for energy_data, col in zip(value, cols):
+#                 pente, ordonnee = energy_data["a"], energy_data["b"]
+#                 unite_gain, unite_cout = energy_data["unit_gain"], energy_data["unit_cost"]
+#                 cost_values = energy_data["cost"]
+#                 gain_values = energy_data["gain"]
+
+#                 scatter = go.Scatter(x=cost_values, y=gain_values,
+#                                      mode='markers',  # Only markers for data points
+#                                      name='Data Points',
+#                                      marker=dict(color=color, size=12))
+
+#                 fig = go.Figure(data=scatter)
+
+#                 x = np.linspace(0, max(cost_values)*1.25, 25)
+#                 # Adding Cost Line
+#                 fig.add_trace(go.Scatter(x=x, y=pente*x + ordonnee,
+#                                          mode='lines+markers',
+#                                          name=f'Gain',
+#                                          line=dict(color=color)))
+
+#                 # Updating layout for each figure
+#                 fig.update_layout(title=f'{category_name} in {unite_gain}',
+#                                   xaxis_title=f'Cost in {unite_cout}',
+#                                   yaxis_title=f'Energy in {unite_gain}',
+#                                   legend_title='Legend')
+#                 with col:
+#                     st.plotly_chart(fig)
+
+def plot_graph(graph_data: dict):
+    for key, value in graph_data.items():
+        if value is None:  # Don't plot the graph if no data is available
+            continue
+
+        # Define category properties
+        category_properties = {
+            "energy": {"name": "Gain Energétique", "color": '#4CAF50'},
+            "financial": {"name": "Gain Financier", "color": 'RoyalBlue'},
+            "greenhouse": {"name": "Réduction des émissions", "color": "#a83832"}
+        }
+
+        category_name = category_properties[key]["name"]
+        color = category_properties[key]["color"]
+
+        # Plotting
+        for energy_data in value if key == "energy" else [value]:
+            scatter = go.Scatter(x=energy_data["cost"], y=energy_data["gain"],
+                                 mode='markers',  # Only markers for data points
+                                 name='Data Points',
+                                 marker=dict(color=color, size=12))
+
+            fig = go.Figure(data=scatter)
+
+            x = np.linspace(0, max(energy_data["cost"])*1.25, 25)
+            # Adding Cost Line
+            fig.add_trace(go.Scatter(x=x, y=energy_data["a"]*x + energy_data["b"],
+                                     mode='lines+markers',
+                                     name='Gain',
+                                     line=dict(color=color)))
+
+            # Updating layout for each figure
+            fig.update_layout(title=f'{category_name} in {energy_data["unit_gain"]}',
+                              xaxis_title=f'Cost in {energy_data["unit_cost"]}',
+                              yaxis_title=f'Energy in {energy_data["unit_gain"]}',
+                              legend_title='Legend')
+
+            st.plotly_chart(fig, use_container_width=True)  # Center the plot

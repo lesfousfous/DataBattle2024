@@ -8,7 +8,8 @@
 /* Navbar container */
 .navbar {
   background-color: #333; /* Dark background color */
-  overflow: hidden; /* Ensure content doesn't overflow */
+  overflow: hidden;
+  width : 70% /* Ensure content doesn't overflow */
 }
 
 /* Links inside the navbar */
@@ -162,7 +163,7 @@
 .block-container {
   border-radius: 20px; /* Rounded corners */
   background-color: #394045; /* Light grey background */
-  padding: 0 1rem 10rem;
+  padding: 0 3rem 3rem 3rem;
   margin-top : 3rem;
   display : flex;
   align-items: center;
