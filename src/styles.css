@@ -9,7 +9,6 @@
 .navbar {
   background-color: #333; /* Dark background color */
   overflow: hidden;
-  width : 70% /* Ensure content doesn't overflow */
 }
 
 /* Links inside the navbar */
@@ -142,57 +141,60 @@
 }
 
 .title {
-  color : #73BE31
+  color: #73be31;
 }
 
 .box-title {
   display: inline-block;
   border-radius: 10px;
-  margin-bottom : 0.5em;
-  text-align : center;
-  border: 2px solid #4CAF50; /* Green border */ 
+  margin-bottom: 0.5em;
+  text-align: center;
+  border: 2px solid #4caf50; /* Green border */
 }
 
-
 .title-divider {
-  border-top: 2px solid #4CAF50; /* Green line */
+  border-top: 2px solid #4caf50; /* Green line */
   width: 100%; /* Full width */
-  margin: 10px 0 20px; /* Spacing around the divider */   
-}   
+  margin: 10px 0 20px; /* Spacing around the divider */
+}
 
 .block-container {
+  display: flex;
+  align-items: center;
   border-radius: 20px; /* Rounded corners */
   background-color: #394045; /* Light grey background */
   padding: 0 3rem 3rem 3rem;
-  margin-top : 3rem;
-  display : flex;
-  align-items: center;
-  width : 95%;
+  margin-top: 3rem;
+  width: 95%;
 }
 
+.block-container div[data-testid="stVerticalBlockBorderWrapper"] {
+  padding: 3rem;
+  width: 100%;
+}
 .champs {
-    display: grid; /* Establishes a grid container */
-    grid-template-rows: auto; /* Defines column sizes */
-    gap: 10px; /* Space between rows and columns */
-    justify-content: start; /* aligns the grid along the row axis */
-    align-content: start; /* aligns the grid along the column axis */
-    grid-auto-flow: row; /* Controls how auto-placed items get inserted in the grid */
+  display: grid; /* Establishes a grid container */
+  grid-template-rows: auto; /* Defines column sizes */
+  gap: 10px; /* Space between rows and columns */
+  justify-content: start; /* aligns the grid along the row axis */
+  align-content: start; /* aligns the grid along the column axis */
+  grid-auto-flow: row; /* Controls how auto-placed items get inserted in the grid */
 }
 
-   /* Style for the detail boxes */
+/* Style for the detail boxes */
 .big-box {
-    border: 2px solid #4CAF50; /* Green border */
-    border-radius: 5px; /* Rounded corners */
-    padding: 20px; /* Some padding */
-    margin: 20px 0; /* Some margin */
+  border: 2px solid #4caf50; /* Green border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 20px; /* Some padding */
+  margin: 20px 0; /* Some margin */
 }
 /* Optional: Style for the text inside boxes */
 .big-box p {
-    font-size: 20px; /* Larger text */
+  font-size: 20px; /* Larger text */
 }
 
 .cout-table {
-  display : grid
+  display: grid;
   grid-template-rows: auto; /* Defines column sizes */
   gap: 10px; /* Space between rows and columns */
   justify-content: start; /* aligns the grid along the row axis */
@@ -205,29 +207,31 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   border: 1px solid black;
   padding: 8px;
   text-align: left;
 }
 
 .green {
-  background-color : green
+  background-color: green;
 }
 
 .red {
-  background-color : red
+  background-color: red;
 }
 td {
-  height : 20px
+  height: 20px;
 }
 
-.application, .bilan-ener {
-  border: 2px solid #2a88f5; /* Blue border */ 
+.application,
+.bilan-ener {
+  border: 2px solid #2a88f5; /* Blue border */
 }
 
-.application .box-title, .bilan-ener .box-title {
-  border: 2px solid #2a88f5; /* Blue border */ 
-  color : #2a88f5;
+.application .box-title,
+.bilan-ener .box-title {
+  border: 2px solid #2a88f5; /* Blue border */
+  color: #2a88f5;
 }
-

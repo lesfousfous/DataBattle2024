@@ -19,7 +19,7 @@ def process_description(string: str):
 
     start_time2 = time.time()
     translator = Translator()
-    user_query = string
+    user_query = string.lower()
     # preprocessor = Preprocessor()
     # preprocessed_query = preprocessor(user_query)
     preprocessed_query = translator.translate(user_query, dest="en").text
