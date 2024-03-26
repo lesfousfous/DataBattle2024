@@ -1,5 +1,5 @@
 from utils.findrelevantinfo import BestSolutionsFinder, change_solutions_format
-from utils.database import SolutionDB, Technology, Database, SolutionDBList
+from utils.database import SolutionDB, Database, SolutionDBList, Category
 from googletrans import Translator
 import time
 
@@ -28,17 +28,17 @@ def process_description(string: str):
     relevant_solutions_ids, class_info = finder.relevant_solutions()
 
     relevant_solutions = [SolutionDB(id) for id in relevant_solutions_ids]
-    for x in relevant_solutions:
-        print(x)
     sol_time = time.time() - start_time - db_time
     print(f"Time to find the solutions : {sol_time}")
 
-    return (Technology(find_techno_id(class_info[0], solutions)), relevant_solutions)
+    return (find_category(class_info[0], solutions), relevant_solutions)
     # print(f"Total time : {time.time() - start_time} sec")
 
 
-def find_techno_id(class_info, solutions):
+def find_category(class_info, solutions):
+    if class_info[0] == 1:  # If we get one of the top classes it's weird most of the time
+        return None
     """Using the data from the model, find the best techno id so you can give all the solutions in that category to the user"""
     solution = [x for x in solutions.solutions if x.id == class_info[1].id][0]
     category = solution.get_category().get_technologies()[:class_info[0]+1]
-    return category[-1].id
+    return Category(category)

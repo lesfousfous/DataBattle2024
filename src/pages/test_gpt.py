@@ -229,7 +229,6 @@ if 'current_solution' in st.session_state:
     solution: SolutionDB
     solution = st.session_state['current_solution']
     st.markdown(custom_css, unsafe_allow_html=True)
-    print(solution)
     title = f"Solution {solution.get_id()} : {solution.get_title()}"
     st.markdown(f"<h1 class='title'>{title}</h1>", unsafe_allow_html=True)
     st.markdown("<hr class='title-divider'>", unsafe_allow_html=True)

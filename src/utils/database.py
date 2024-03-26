@@ -157,12 +157,24 @@ class Category(DatabaseObject):
     def __init__(self, technologies: 'list[Technology]') -> None:
         self.technologies = technologies
 
-    def retrieve_all_solutions(self):
+    def get_solutions(self):
         techno_id = self.technologies[-1].id
         DatabaseObject.cursor.execute(
             f"""SELECT numsolution FROM tblsolution WHERE codetechno = {techno_id}""")
-        solution_ids = [x[0] for x in DatabaseObject.cursor.fetchall()]
-        return [SolutionDB(id) for id in solution_ids]
+        solutions = [SolutionDB(x[0])
+                     for x in DatabaseObject.cursor.fetchall()]
+        DatabaseObject.cursor.execute(
+            f"""SELECT numtechno FROM tbltechno WHERE codeparenttechno = {techno_id}""")
+        techno_children = [Technology(child[0])
+                           for child in DatabaseObject.cursor.fetchall()]
+        while techno_children:
+            for child in techno_children:
+                solutions.extend(child.get_solutions())
+            DatabaseObject.cursor.execute(
+                f"""SELECT numtechno FROM tbltechno WHERE codeparenttechno = {child.get_id()}""")
+            techno_children = [Technology(child[0])
+                               for child in DatabaseObject.cursor.fetchall()]
+        return solutions
 
     def get_technologies(self):
         return self.technologies
@@ -194,6 +206,12 @@ class Technology(DatabaseObject):
             return data[0]
         else:
             return "Aucune"
+
+    def get_solutions(self):
+        DatabaseObject.cursor.execute(
+            f"""SELECT numsolution FROM tblsolution WHERE codetechno = {self.id}""")
+        solution_ids = [x[0] for x in DatabaseObject.cursor.fetchall()]
+        return [SolutionDB(id) for id in solution_ids]
 
     def get_id(self):
         return self.id
@@ -673,9 +691,9 @@ class SolutionDBList(DatabaseObject):
     def _retrieve_data(self, indexdictionnaire):
         query = f"""SELECT traductiondictionnaire, codeappelobjet FROM tbldictionnaire WHERE codeappelobjet IN ({', '.join(['%s'] * len(self.solutions))}) AND codelangue = 2 and typedictionnaire = 'sol' and indexdictionnaire = {indexdictionnaire}"""
         DatabaseObject.cursor.execute(query, self.get_ids())
-        data = DatabaseObject.cursor.fetchmany(len(self.solutions))
+        data = DatabaseObject.cursor.fetchall()
         if data:
-            return [x for x in data]
+            return [x[0] for x in data]
         else:
             return "Aucune"
 
@@ -698,7 +716,7 @@ class TechnoList(DatabaseObject):
     def _retrieve_data(self, indexdictionnaire):
         query = f"""SELECT traductiondictionnaire FROM tbldictionnaire WHERE codeappelobjet IN ({', '.join(['%s'] * len(self.technologies))}) AND codelangue = 2 and typedictionnaire = 'tec' and indexdictionnaire = {indexdictionnaire}"""
         DatabaseObject.cursor.execute(query, self.get_ids())
-        data = DatabaseObject.cursor.fetchmany(len(self.technologies))
+        data = DatabaseObject.cursor.fetchall()
         if data:
             return [x[0] for x in data]
         else:

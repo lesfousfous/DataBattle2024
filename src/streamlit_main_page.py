@@ -1,5 +1,6 @@
 import streamlit as st
 
+st.set_page_config(layout="wide")
 session_state = st.session_state
 if "current_page" not in session_state:
     session_state.current_page = "page_main"
@@ -7,7 +8,7 @@ if "current_page" not in session_state:
 
 def load_css():
     try:
-        with open("part1/styles.css", "r") as f:
+        with open("src/styles.css", "r") as f:
             css = f.read()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
     except:

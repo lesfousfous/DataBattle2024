@@ -1,88 +1,94 @@
-
 [data-testid="stSidebarContent"] {
-    background-image: linear-gradient(#bbbbbb,#666666);
-    color: white;
+  background-image: linear-gradient(#bbbbbb, #666666);
+  color: white;
 }
 
 /* navbar.css */
 
 /* Navbar container */
 .navbar {
-    background-color: #333; /* Dark background color */
-    overflow: hidden; /* Ensure content doesn't overflow */
+  background-color: #333; /* Dark background color */
+  overflow: hidden; /* Ensure content doesn't overflow */
 }
 
 /* Links inside the navbar */
 .navbar a {
-    width: 25%;
-    float: left; /* Float links to the left */
-    display: block; /* Display links as block elements */
-    color: white; /* Text color */
-    text-align: center; /* Center align text */
-    padding: 14px 16px; /* Add padding for better spacing */
-    text-decoration: none; /* Remove underline */
+  width: 25%;
+  float: left; /* Float links to the left */
+  display: block; /* Display links as block elements */
+  color: rgba(255, 255, 255, 0.856); /* Text color */
+  text-align: center; /* Center align text */
+  padding: 14px 16px; /* Add padding for better spacing */
+  text-decoration: none; /* Remove underline */
 }
 
 /* Change background color of navbar links on hover */
 .navbar a:hover {
-    background-color: #ddd; /* Light background color */
-    color: black; /* Change text color on hover */
+  background-color: #ddd; /* Light background color */
+  color: black; /* Change text color on hover */
 }
 
 /* Add an active class to highlight the current page */
 .active {
-    background-color: #555; /* Darker background color */
+  background-color: #555; /* Darker background color */
 }
 
 /* Right-aligned links inside the navbar */
 .navbar-right {
-    float: right; /* Float links to the right */
+  float: right; /* Float links to the right */
 }
 
-
 .dropdown {
-    float: left; /* Float dropdown to the left */
-    overflow: hidden; /* Ensure content doesn't overflow */
-    width: 25%;
+  float: left; /* Float dropdown to the left */
+  overflow: hidden; /* Ensure content doesn't overflow */
+  width: 25%;
 }
 
 /* Style the dropdown button */
 .dropbtn {
-    background-color: #333; /* Dark background color */
-    color: white; /* Text color */
-    padding: 14px 16px; /* Add padding for better spacing */
-    border: none; /* Remove border */
-    cursor: pointer; /* Add cursor pointer on hover */
+  background-color: #333; /* Dark background color */
+  color: white; /* Text color */
+  padding: 14px 16px; /* Add padding for better spacing */
+  border: none; /* Remove border */
+  cursor: pointer; /* Add cursor pointer on hover */
 }
 
 /* Style the dropdown content */
 .dropdown-content {
-    display: none; /* Hide dropdown content by default */
-    position: absolute; /* Position dropdown content absolutely */
-    background-color: #f9f9f9; /* Background color */
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); /* Add shadow */
-    z-index: 1; /* Set z-index to display above other elements */
-    width: 25%;
+  display: none; /* Hide dropdown content by default */
+  position: absolute; /* Position dropdown content absolutely */
+  background-color: #f9f9f9; /* Background color */
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2); /* Add shadow */
+  z-index: 1; /* Set z-index to display above other elements */
+  width: 25%;
 }
 
 /* Style the dropdown links */
 .dropdown-content a {
-    background-color: #333; /* Dark background color */
-    float: none; /* Remove floating */
-    color: rgb(255, 255, 255); /* Text color */
-    padding: 12px 16px; /* Add padding for better spacing */
-    text-decoration: none; /* Remove underline */
-    display: block; /* Display as block element */
-    text-align: left; /* Left align text */
-    width: 100%;
+  background-color: #333; /* Dark background color */
+  float: none; /* Remove floating */
+  color: rgb(255, 255, 255); /* Text color */
+  padding: 12px 16px; /* Add padding for better spacing */
+  text-decoration: none; /* Remove underline */
+  display: block; /* Display as block element */
+  text-align: left; /* Left align text */
+  width: 100%;
 }
 
 /* Change background color of dropdown links on hover */
 .dropdown-content a:hover {
-    background-color: #ddd; /* Light background color */
+  background-color: #ddd; /* Light background color */
 }
 
 /* Show dropdown content when hovering over dropdown button */
 .dropdown:hover .dropdown-content {
-    display: block; /* Show dropdown content */
+  display: block; /* Show dropdown content */
+}
+
+.sol-preview {
+  width: 36em;
+  margin: 20px 0;
+  background-color: #5a5c63;
+  border-radius: 15px; /* Rounded corners */
+  padding: 10px;
 }
