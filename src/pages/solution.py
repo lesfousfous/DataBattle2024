@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.design import load_all_page_requirements show_solution
+from utils.design import load_all_page_requirements, show_solution
 import random
 
 
