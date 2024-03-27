@@ -3,6 +3,7 @@ from utils.run_part1 import process_description
 from utils.database import SolutionDB
 from utils.design import load_all_page_requirements, show_solution
 from streamlit.errors import DuplicateWidgetID
+import random
 
 
 def cut_text(text, length):
@@ -45,6 +46,7 @@ def display_results(category, relevant_solutions):
             solutions_in_category = category.get_solutions()
             solutions_random = [
                 solution for solution in solutions_in_category[:3]]
+            solutions_random = random.sample(solutions_in_category, 3)
             for solution in solutions_random:
                 display_solution(solution)
 
@@ -74,13 +76,8 @@ def show_query_page():
     if 'button_disabled' not in st.session_state:
         st.session_state.button_disabled = False
 
-    if 'nb' not in st.session_state:
-        st.session_state.nb = 0
     # Button to initiate processing
     if st.button("Chercher", disabled=st.session_state.processing) or st.session_state.processing:
-        st.session_state.nb += 1
-        # print(st.session_state.nb)
-        # print(f"Processing : {st.session_state.processing}\nLast Results : {st.session_state.last_results}\nDisabled : {st.session_state.button_disabled}")
         st.session_state.processing = True
         if not st.session_state.button_disabled:
             st.session_state.button_disabled = True
