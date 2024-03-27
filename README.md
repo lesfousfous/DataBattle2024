@@ -45,5 +45,5 @@ On peut lancer le script `streamlit_main_page.py`.
 
 ```bash
 cd src
-python3 streamlit_main_page.py
+streamlit run streamlit_main_page.py
 ```
