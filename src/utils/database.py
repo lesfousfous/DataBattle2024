@@ -15,7 +15,6 @@ class Database:
 
     def __init__(self) -> None:
         config = ConfigParser()
-        st.write(config)
         config.read("config.ini")
         self.database_connection = Database._init_database_connection(config)
 
