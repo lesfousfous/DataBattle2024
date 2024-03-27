@@ -1,19 +1,49 @@
 # DataBattle2024
 
-1. Setup le venv
-   a) Se placer un dossier au dessus du repo
-   b) python3 -m venv .venv
-   c) source ./bin/activate
-   d) pip install -r requirements.txt (Attention à bien se placer pour que le requirement.txt soit dans le dossier où l'on exec cette commande)
+## Setup le venv
+```bash
+cd .. # Se placer un dossier au dessus du repo
+python3 -m venv .venv
+source .venv/bin/activate
+cd DataBattle2024 # retourner dans le repo
+pip install -r requirements.txt # Attention à bien se placer pour que le requirement.txt soit dans le dossier où l'on exec cette commande
 
-2. Setup la db
+```
 
-a) mysql -u User -p (Il faut remplacer le User par votre truc et se placer dans le dossier qui contient le config.ini)
-b) source database.sql (J'ai rajouté un tableau à la BDD)
+## Setup la dase de donnée
+Créer/mettre son config.ini dans `src`:
+```ini
+[mysqlDB]
+db = kerdos
+host = 127.0.0.1
+password = your_sql_password
+user = your_sql_username
+```
 
-3. Ajouter les embeddings à la BDD
+Ouvrir le shell sql: 
+```bash 
+mysql -u User -p  # Il faut remplacer le User par votre username sql 
+```
+Puis lancer les commandes:
+```sql
+use nom_db; # Il faut remplacer nom_db par le nom de la base de donnée
+source database.sql; # Nécessaire une nouvelle table a été ajouté
+``` 
 
-a) Il faut run la fonction fill_embeddings_table_from_scratch() du script add_new_solution_embedding.py
-(ça prend 10-15min)
+## Ajouter les embeddings à la BDD
 
-4. C bon tu peux run le main.py
+Lancer le script `add_new_solution_embedding.py`.
+
+```bash
+cd src
+python3 -m utils.add_new_solution_embedding #  Un installer va souvrir pour installer nltk, le fermer une fois l'instalation faite. Le programme va se lancer ensuite, attention ça peut prend  jusqu'à 10-15min.
+```
+
+##  Exécution
+
+On peut lancer le script `streamlit_main_page.py`.
+
+```bash
+cd src
+streamlit run streamlit_main_page.py
+```
