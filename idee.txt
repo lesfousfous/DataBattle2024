@@ -10,3 +10,5 @@ L'utilisateur peut aussi préciser uniquement le secteur et alors on lui return 
 Ajouter un search suggestion (genre on propose des mots qui peuvent suivre dans la query)
 
 Si la partie 1 propose une catégorie complète, il faut que l'utilisateur puisse sélectionner rapidement les solutions qui l'intéresse.
+
+https://databattle2024-kvntygjww9fdtnxwmd77in.streamlit.app/

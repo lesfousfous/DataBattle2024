@@ -8,12 +8,14 @@ from nltk.corpus import wordnet
 import nltk
 from bs4 import BeautifulSoup
 import torch
+import streamlit as st
 
 
 class Database:
 
     def __init__(self) -> None:
         config = ConfigParser()
+        st.write(config)
         config.read("config.ini")
         self.database_connection = Database._init_database_connection(config)
 
