@@ -1,5 +1,5 @@
-from database import SolutionDB, Preprocessor, Database
-from findrelevantinfo import EmbeddingsModel
+from utils.database import SolutionDB, Preprocessor, Database
+from utils.findrelevantinfo import EmbeddingsModel
 from googletrans import Translator
 
 
@@ -63,4 +63,8 @@ def add_solution_embedding(solution_id: int):
     db.database_connection.commit()
 
 
-fill_embeddings_table_from_scratch()
+if __name__ == "__main__":
+    import nltk
+    nltk.download()
+
+    fill_embeddings_table_from_scratch()
